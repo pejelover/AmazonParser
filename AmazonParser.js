@@ -717,8 +717,6 @@ class AmazonParser
 		return Promise.resolve( productVendors );
 	}
 
-
-
 	getVersionLambda( func_name )
 	{
 		return ( p, name, version, value )=>
@@ -727,24 +725,44 @@ class AmazonParser
 		};
 	}
 
-	getAsinFromUrl()
+	getAsinFromUrl( url )
 	{
-		var asin	= window.location.href.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
+		var asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
 
 		if( asin.includes('https://' ) )
 		{
-			asin = window.location.href.replace(/^.*\/gp\/offer-listing\/(\w+)\/.*/,'$1');
+			asin = url.replace(/^.*\/gp\/offer-listing\/(\w+)\/.*/,'$1');
 		}
 
 		if( asin.includes('https://') )
 		{
-			asin = window.location.href.replace(/^.*\gp\/product\/(\w+).*$/,'$1');
+			asin = url.replace(/^.*\gp\/product\/(\w+).*$/,'$1');
 		}
 
 		if( asin.includes('https://') )
 		{
-			asin = window.location.href.replace(/.*\/dp\/(\w+)$/,'$1');
+			asin = url.replace(/.*\/dp\/(\w+)$/,'$1');
 		}
+
 		return asin;
+	}
+
+	getPageType( href )
+	{
+
+		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( href ) )
+			return 'PREVIOUS_TO_CART_PAGE';
+
+		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( href ) )
+			return 'VENDORS_PAGE';
+
+		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( href ) )
+			return 'PRODUCT_PAGE';
+
+		if( /&field-keywords=\w+/.test( href ) )
+			return 'SEARCH_PAGE';
+
+		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) )
+			return 'CART_PAGE';
 	}
 }
