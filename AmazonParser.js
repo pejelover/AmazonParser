@@ -6,9 +6,6 @@ class AmazonParser
 	}
 	/*
 		Parses the vendor section of
-
-		https://www.amazon.com/sp?_encoding=UTF8&asin=B00006RSQ4&isAmazonFulfilled=0&isCBA=&marketplaceID=ATVPDKIKX0DER&orderID=&seller=A2G88111572J8M&tab=&vasStoreID=
-
 	*/
 
 	log(args)
@@ -24,12 +21,6 @@ class AmazonParser
 	}
 
 	/*
-		Parses the products section of
-
-		https://www.amazon.com/sp?_encoding=UTF8&asin=B00006RSQ4&isAmazonFulfilled=0&isCBA=&marketplaceID=ATVPDKIKX0DER&orderID=&seller=A2G88111572J8M&tab=&vasStoreID=
-
-		//this Fails
-		https://www.amazon.com/dp/B00GABCW7W?m=A34AEU7JQPHE6N&ref_=v_sp_detail_page
 	*/
 
 	getProductsFromVendorInfoPageSectionProducts()
