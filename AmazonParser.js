@@ -15,6 +15,7 @@ class AmazonParser
 			console.log( args );
 		}
 	}
+
 	getVendorInfoFromVendorInfoPage()
 	{
 		var version = this.getVersionLambda('getVendorInfoFromVendorInfoPage');
@@ -137,7 +138,6 @@ class AmazonParser
 				p.producer = producer.textContent.trim();
 				version( p , 'producer', 3, p.producer );
 			}
-
 		}
 
 		if( p.producer === "" )
@@ -239,7 +239,6 @@ class AmazonParser
 				{
 					p.left = plefts[ i ].textContent.trim();
 					version( p ,'left', 6, p.left);
-					break;
 				}
 
 
@@ -248,7 +247,6 @@ class AmazonParser
 				{
 					p.left = 'Currently unavailable.';
 					version( p ,'left', 7, p.left);
-					break;
 				}
 
 				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
@@ -279,7 +277,7 @@ class AmazonParser
 			}
 		}
 
-		p.asin	= this.getAsinFromUrl();
+		p.asin	= this.getAsinFromUrl( window.location.href );
 
 		if( p.asin )
 		{
@@ -650,7 +648,7 @@ class AmazonParser
 
 	parseOtherVendors()
 	{
-		var asin	= this.getAsinFromUrl();
+		var asin	= this.getAsinFromUrl( window.location.href );
 		var a		= document.querySelectorAll('#olpOfferList h3.olpSellerName a');
 		this.log('Vendor url match',asin);
 
@@ -716,6 +714,46 @@ class AmazonParser
 		};
 	}
 
+	getProductFromBuyBox()
+	{
+		var box = document.querySelector('#desktop_buybox');
+
+		var product = {};
+
+		product.asin 		= inputLmbda(box,"ASIN");
+		//product.merchant_id	= inputLmbda(box,"merchantID");
+		//product.selling_customer_id	= inputLmbda(box,"sellingCustomerID");
+		//product.sale 		= this.getValueSelector( box, '#price_inside_buybox' );
+
+		let shipFromSold	= this.getValueSelector( box, '#merchant-info');
+		let shipTextx		= '';
+
+		if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
+		{
+			shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
+		}
+
+		let fullfilled_by = '';
+
+		if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
+		{
+			fullfilled_by	= 'AMAZON';
+			vendor_name		= 'Amazon.com';
+		}
+
+		let offer = {
+			rsid			: this.getValueSelector( box, 'input[name="rsid"]')
+			,price			: getValueSelector( box, '#price_inside_buybox' )
+			,merchantId		: this.getValueSelector( box, 'input[name="merchantID"]')
+			,shipping		: this.getValueSelector( box, '#price-shipping-message')
+			,vendor_name	: vendor_name
+		}
+
+		product.offers = [ offer ];
+
+		return product;
+	}
+
 	getAsinFromUrl( url )
 	{
 		var asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
@@ -740,7 +778,6 @@ class AmazonParser
 
 	getPageType( href )
 	{
-
 		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( href ) )
 			return 'PREVIOUS_TO_CART_PAGE';
 
@@ -750,10 +787,127 @@ class AmazonParser
 		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( href ) )
 			return 'PRODUCT_PAGE';
 
+		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
+		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
 		if( /&field-keywords=\w+/.test( href ) )
 			return 'SEARCH_PAGE';
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) )
 			return 'CART_PAGE';
+	}
+
+	getValueSelector(node,selector)
+	{
+		let selElement = node.querySelector( selector );
+		if( selElement )
+		{
+			if( selElement.tagName === 'INPUT' || selElement.tagName === 'SELECT' )
+			{
+				if( selElement.value.trim() === '' )
+					return null;
+
+				return selElement.value.trim();
+			}
+
+			if( selElement.textContent !== '' )
+			{
+				return selElement.textContent.trim();
+			}
+		}
+
+		return null;
+	}
+
+	parseProductSearchList()
+	{
+		let fl = (i)=> i<10 ? '0'+i : i;
+
+		let date	= new Date();
+		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
+
+		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
+		let items = Array.from( s );
+		let products = [];
+
+		items.forEach(( i)=>
+		{
+			let title = this.getValueSelector(i,'a.s-access-detail-page' );
+			if( title == null )
+				return;
+
+			let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-small > .a-row.a-spacing-none:nth-child(2)');
+
+			let  offersPrice = Array.from( i.querySelectorAll('a>span.a-offscreen'));
+
+
+			let offers = [];
+
+			offersPrice.forEach((offerElement)=>
+			{
+				let isPrime		= offerElement.parentElement.parentElement.querySelector('[aria-label="Prime"]');
+				let description	= null;
+
+				let subscribeAndSave = /Subscribe & Save/.test( offerElement.parentElement );
+
+				if( subscribeAndSave )
+					description = 'Subscribe & Save';
+
+				let offer		= {
+					price			: offerElement.textContent.trim()
+					,url			: offerElement.parentElement.getAttribute('href')
+					,description	: description
+					,date			: dateStr
+					,time			: date.toISOString()
+				}
+
+				if( isPrime )
+					offer.is_prime = true;
+
+				offers.push( offer );
+			});
+
+			let stock = [];
+
+			if( offers.length == 1 )
+			{
+				let text = i.textContent.replace(/\s+/gm,' ');
+
+				if( /only \d+ left in stock/i.test( text ) )
+				{
+					let href = i.querySelector('a.s-access-detail-page');
+
+					stock.push
+					({
+						qty		: text.replace(/.*Only (\d+) left in stock.*/,'$1' )
+						,url	: href.getAttribute('href')
+						,date	: dateStr
+						,time	: date.toISOString()
+					});
+				}
+			}
+
+
+			if( offersPrice.length )
+			{
+
+				let p = {
+					asin			: i.getAttribute('data-asin')
+					,producer_name	: /^by /.test( producer_name ) ? producer_name.replace(/^by /,'') : null
+					,title	: title
+					,offers : offers
+					,stock	: stock
+				};
+
+				if( p.asin )
+					products.push( p );
+			}
+		});
+
+		return products;
+	}
+
+	mergeProducts()
+	{
+
 	}
 }
