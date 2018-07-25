@@ -24,7 +24,61 @@ class AmazonParser
 	/*
 	*/
 
+	getProductsFromVendorInfoPageSectionProducts()
+	{
+		var pArray		= [];
+		var version		= this.getVersionLambda('VendorProductSectionParser');
+		var products	= document.queryAll('#products-results-data  .product-details');
 
+		for(var i=0;i<products.length;i++)
+		{
+			var p = {};
+			p.versions = [];
+
+			version(p,'extracted',1,window.location.href);
+
+
+			var ptitle = products[i].querySelector('.product-title a[title]');
+
+			if( ptitle )
+			{
+				p.title = ptitle.getAttribute('title');
+				version(p,'title',1, p.title);
+
+				p.url 	= ptitle.getAttribute('href');
+				version(p,'url',1 ,p.url );
+			}
+
+			var prating = products[i].querySelector('.product-rating a[title]');
+
+			if( prating )
+			{
+				p.rating = prating.getAttribute('title');
+				version(p,'rating',1, p.rating );
+			}
+
+
+			var nrating = products[i].querySelector('.product-rating:not([title])');
+			if( nrating  )
+			{
+				p.number_of_ratings = nrating.textContent.trim();
+				version(p,'no_rating',1, p.number_of_ratings);
+			}
+
+
+			var pprice = products[i].querySelector('.product-price');
+
+			if( pprice )
+			{
+				p.price = pprice.textContent.trim();
+				version(p,'no_price',1, p.price );
+			}
+
+			pArray.push( p );
+		}
+
+		return pArray;
+	}
 
 	getProductFromProductPage()
 	{
@@ -230,40 +284,29 @@ class AmazonParser
 			version( p, 'ASIN',1 ,p.asin );
 		}
 
-		let offerDate	= new Date();
-		let offer	= {
-			time : offerDate
-			,date	: this.getDateString( offerDate )
-		};
-
 		var sale = document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
-
 		if( sale )
 		{
 			//Sael v4
-			//p.sale 	 = sale.textContent.trim();
-			offer.price = sale.textContent.trim();
+			p.sale 	 = sale.textContent.trim();
 			version( p ,'sale', 4, p.sale );
 		}
-		if( offer.price )
+		if( sale )
 		{
 			//sale V1
-			offer.price = sale.textContent.replace(/Sale:/g,'').trim();
+			p.sale 	 = sale.textContent.replace(/Sale:/g,'').trim();
 			version( p ,'sale', 1, p.sale );
 		}
 		else if( (sale = document.querySelector('#price span.a-size-medium.a-color-price')) )
 		{
-			let is_prime = document.querySelector('#price .a-icon-prime');
-			if( is_prime )
-				offer.is_prime = true;
 			//sale V2
-			offer.price = sale.textContent.trim();
+			p.sale = sale.textContent.trim();
 			version( p ,'sale', 2, p.sale );
 		}
 		else if( ( sale = document.querySelector('div.a-section>span.a-size-large.a-color-price') ) )
 		{
 			//sale V3
-			offer.price = sale.textContent.trim();
+			p.sale = sale.textContent.trim();
 			version( p ,'sale', 3, p.sale );
 		}
 		else if( (sale = document.querySelector('div#formats div#tmmSwatches li a>span:last-child') ) )
@@ -274,7 +317,7 @@ class AmazonParser
 
 			if( index > -1 )
 			{
-				offer.price = sale.textContent.trim().substring( index+toSearch.length );
+				p.sale = sale.textContent.trim().substring( index+toSearch.length );
 			}
 			version( p ,'sale', 4, p.sale );
 		}
@@ -287,17 +330,17 @@ class AmazonParser
 		if( shipping )
 		{
 			version( p ,'shipping', 3, p.shipping );
-			//p.shipping =  shipping.textContent;
-			offer.shipping	= shipping.textContent;
+			p.shipping =  shipping.textContent;
 		}
 
 		if( typeof p.shipping === "undefined" )
 		{
+
 			shipping = document.querySelector('a.cfs-free-shipping');
 
 			if( shipping )
 			{
-				offer.shipping = shipping.textContent.trim();
+				p.shipping = shipping.textContent.trim();
 				version( p ,'shipping', 1, p.shipping );
 			}
 		}
@@ -308,7 +351,7 @@ class AmazonParser
 			shipping = document.querySelector('#priceblock_ourprice_row');
 			if( shipping )
 			{
-				offer.shipping = shipping.textContent.trim().replace(/\n/g,' ').replace(/.*(\$\d+(\.\d+)? shipping).*/,'$1');
+				p.shipping = shipping.textContent.trim().replace(/\n/g,' ').replace(/.*(\$\d+(\.\d+)? shipping).*/,'$1');
 				version( p ,'shipping', 2, p.price );
 			}
 		}
@@ -317,16 +360,17 @@ class AmazonParser
 
 		if( fullfilled )
 		{
-			offer.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('fulfilled by amazon') ? 'AMAZON':'';
+			p.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('fulfilled by amazon') ? 'AMAZON':'';
 			version( p ,'fullfilled', 1, p.fullfilled_by );
 		}
 		if(fullfilled && p.fullfilled_by === '' )
 		{
-			offer.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('ships from and sold by') ? 'VENDOR':'';
+			p.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('ships from and sold by') ? 'VENDOR':'';
 			version( p ,'fullfilled', 2, p.fullfilled_by );
 		}
 
-		if( offer.price )
+
+
 
 		//Especs
 		p.spec= {};
@@ -643,10 +687,7 @@ class AmazonParser
 
             var shipping        = row.querySelector('.olpShippingInfo');
 			objRow.shipping		= shipping ? shipping.textContent : '';
-
-			if( row.querySelector('.a-icon-prime') !== null )
-				offer.is_prime = true;
-
+			objRow.isPrime		= row.querySelector('.a-icon-prime') !== null;
 			objRow.condition	= row.querySelector('.olpCondition').textContent;
 
 			var amazonFullfill	= row.querySelector('a.olpDeliveryColumn');
@@ -673,41 +714,33 @@ class AmazonParser
 		};
 	}
 
-	getOfferFromBuyBox()
+	getProductFromBuyBox()
 	{
 		var box = document.querySelector('#desktop_buybox');
 
 		var product = {};
 
-		let shipFromSold			= this.getValueSelector( box, "#merchant-info");
-		let shipFromSoldElement		= box.querySelector('#merchant-info');
-		let shipTextx				= '';
+		product.asin 		= this.getValueSelector(box,'input[name="ASIN"]');
+		//product.merchant_id	= inputLmbda(box,"merchantID");
+		//product.selling_customer_id	= inputLmbda(box,"sellingCustomerID");
+		//product.sale 		= this.getValueSelector( box, '#price_inside_buybox' );
 
-		let vendor_name 			= this.getValueSelector( shipFromSoldElement,'a:first-of-type');
-		let fullfilled_by			= this.getValueSelector( shipFromSoldElement,'a:last-of-type');
-
-
-		if( fullfilled_by === "Fulfilled by Amazon" )
-			fullfilled_by = 'AMAZON';
+		let shipFromSold	= this.getValueSelector( box, '#merchant-info');
+		let shipTextx		= '';
 
 		if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
 		{
 			shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
 		}
 
-		if( ! fullfilled_by )
+		let fullfilled_by = '';
+		let vendor_name		= '';
+
+		if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
 		{
-			let fullfilled_by = '';
-
-			let vendor_name	= '';
-
-			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
-			{
-				fullfilled_by	= 'AMAZON';
-				vendor_name		= 'Amazon.com';
-			}
+			fullfilled_by	= 'AMAZON';
+			vendor_name		= 'Amazon.com';
 		}
-
 
 		let offer = {
 			rsid			: this.getValueSelector( box, 'input[name="rsid"]')
@@ -715,14 +748,11 @@ class AmazonParser
 			,merchantId		: this.getValueSelector( box, 'input[name="merchantID"]')
 			,shipping		: this.getValueSelector( box, '#price-shipping-message')
 			,vendor_name	: vendor_name
-			,fullfilled_by	: fullfilled_by
 		}
 
-		let isPrime =  box.querySelector('.a-icon-prime');
-		if( isPrime )
+		product.offers = [ offer ];
 
-
-		return offer;
+		return product;
 	}
 
 	getAsinFromUrl( url )
@@ -760,18 +790,11 @@ class AmazonParser
 
 		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
 		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
+		if( /&field-keywords=\w+/.test( href ) || /\/s\/ref=sr_pg_\d+\?/.test( href ) )
+			return 'SEARCH_PAGE';
+
 		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) )
 			return 'CART_PAGE';
-
-		if( /&field-keywords=\w+/.test( href ) )
-			return 'SEARCH_PAGE';
-
-		//https://www.amazon.com/s/ref=sr_pg_5?rh=XXXXXXXXXoffice+paper&page=5&keywords=office+paper&ie=UTF8&qid=1532465343
-
-		if( /&keywords=.+/.test( href ) && /&page=\d+/.test( href ) )
-		{
-			return 'SEARCH_PAGE';
-		}
 	}
 
 	getValueSelector(node,selector)
@@ -798,6 +821,10 @@ class AmazonParser
 
 	parseProductSearchList()
 	{
+		let fl = (i)=> i<10 ? '0'+i : i;
+
+		let date	= new Date();
+		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
 
 		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
 		let items = Array.from( s );
@@ -805,18 +832,27 @@ class AmazonParser
 
 		items.forEach(( i)=>
 		{
-			let isCarousel = i.querySelector('.a-carousel-row');
-			if( isCarousel )
-				return;
-
 			let title = this.getValueSelector(i,'a.s-access-detail-page' );
-
 			if( title == null )
 				return;
 
-			let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-small > .a-row.a-spacing-none:nth-child(2)');
+			let producer_name = '';
 
-			let  offersPrice = Array.from( i.querySelectorAll('a>span.a-offscreen:not([data-a-carousel-options])'));
+			if( this.getValueSelector( i, 'div > div:nth-child(5) > div:nth-child(2) > span:nth-child(1)') == 'by' )
+				producer_name = this.getValueSelector(i,'div > div:nth-child(5) > div:nth-child(2) > span:nth-child(2)');
+			else if( this.getValueSelector(i,'div > div:nth-child(3) > div:nth-child(2) > span:nth-child(1)') == 'by' )
+				producer_name = this.getValueSelector(i,'div > div:nth-child(5) > div:nth-child(2) > span:nth-child(2)');
+			else if( this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(1)') == 'by' )
+				producer_name = this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(2)');
+			else if( this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(1)') == 'by' )
+				producer_name = this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(2)');
+			else if( this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(1)') == 'by' )
+				producer_name = this.getValueSelector(i,'#result_17 > div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(2)');
+
+			////let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-small > .a-row.a-spacing-none:last-of-type');
+			//let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-mini > .a-row.a-spacing-none:last-of-type');
+
+			let  offersPrice = Array.from( i.querySelectorAll('a>span.a-offscreen'));
 
 
 			let offers = [];
@@ -870,9 +906,9 @@ class AmazonParser
 			{
 
 				let p = {
-					asin			: i.getAttribute('data-asin')
-					,producer_name	: /^by /.test( producer_name ) ? producer_name.replace(/^by /,'') : null
-					,title	: title
+					asin		: i.getAttribute('data-asin')
+					,producer	: producer_name
+					,title	: title.replace(/^\[Sponsored\](.*)$/,'$1')
 					,offers : offers
 					,stock	: stock
 				};
@@ -887,16 +923,6 @@ class AmazonParser
 
 	mergeProducts()
 	{
-		//let date	= new Date();
-		//let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
-	}
 
-	getDateString( date )
-	{
-		let fl = (i)=> i<10 ? '0'+i : i;
-		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
-		return dateStr;
 	}
 }
-
-
