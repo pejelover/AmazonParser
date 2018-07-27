@@ -24,6 +24,44 @@ class AmazonParser
 	/*
 	*/
 
+
+	getParameters()
+	{
+		let x = window.location.search;
+		let finalString = x;
+		if( finalString.indexOf('?') === 0 )
+		{
+			finalString = finalString.substring( 1, finalString.length-1 );
+		}
+
+		let parametersArray	= finalString.split('&');
+
+		let obj = {};
+
+		for(let i=0;i<parametersArray.length;i++)
+		{
+			let s = parametersArray[i].split('=');
+
+			if( s.length > 1 )
+			{
+				let value = decodeURIComponent( s[ 1 ] ).toLowerCase();
+
+				if( s[0] in obj )
+				{
+					if( Array.isArray( obj[ s[0] ] ) )
+						obj[ s[0] ].push(  value  );
+					else
+						obj[ s[0] ] = [ obj[s[0] ], value ];
+				}
+				else
+				{
+					obj[ s[0] ] = value;
+				}
+			}
+		}
+		return obj;
+	}
+
 	getProductsFromVendorInfoPageSectionProducts()
 	{
 		var pArray		= [];
@@ -45,7 +83,7 @@ class AmazonParser
 				p.title = ptitle.getAttribute('title');
 				version(p,'title',1, p.title);
 
-				p.url 	= ptitle.getAttribute('href');
+				p.url 	= this.cleanPicassoRedirect( ptitle.getAttribute('href') );
 				version(p,'url',1 ,p.url );
 			}
 
@@ -82,10 +120,21 @@ class AmazonParser
 
 	getProductFromProductPage()
 	{
+		let fl = (i)=> i<10 ? '0'+i : i;
+
+		let date	= new Date();
+		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
+
+
 		// jshint shadow: true
 		var p 		= {};
 		p.versions	= [];
-		p.images 	=[];
+		p.images 	= [];
+		p.offers 	= [];
+		p.stock		= [];
+		p.parsed	= date;
+		p.parsedDates	= [ dateStr ];
+
 		var version		= this.getVersionLambda('getProductFromProductPage');
 
 		p.url 	= window.location.href;
@@ -168,7 +217,14 @@ class AmazonParser
 				p.producer = brand.textContent.trim();
 				version( p , 'producer', 6, p.producer );
 			}
+			if( p.producer == '' && brand.tagName == "A" )
+			{
+				let href = brand.getAttribute('href');
+				let clean	= href.substring( 1, href.length-1 );
+				p.producer = clean.substring(0, clean.indexOf('/') );
+			}
 		}
+
 
 
 
@@ -257,6 +313,9 @@ class AmazonParser
 			}
 		}
 
+
+
+
 		var choice	= document.querySelectorAll('div.ac-badge-wrapper');
 
 		if( choice )
@@ -285,41 +344,43 @@ class AmazonParser
 		}
 
 		var sale = document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
+		let offer	= {};
+
 		if( sale )
 		{
 			//Sael v4
-			p.sale 	 = sale.textContent.trim();
-			version( p ,'sale', 4, p.sale );
+			offer.price = sale.textContent.trim();
+			version( p ,'sale', 4, offer.price );
 		}
 		if( sale )
 		{
 			//sale V1
-			p.sale 	 = sale.textContent.replace(/Sale:/g,'').trim();
-			version( p ,'sale', 1, p.sale );
+			offer.price 	 = sale.textContent.replace(/Sale:/g,'').trim();
+			version( p ,'sale', 1, offer.price );
 		}
 		else if( (sale = document.querySelector('#price span.a-size-medium.a-color-price')) )
 		{
 			//sale V2
-			p.sale = sale.textContent.trim();
-			version( p ,'sale', 2, p.sale );
+			offer.price= sale.textContent.trim();
+			version( p ,'sale', 2, offer.price );
 		}
 		else if( ( sale = document.querySelector('div.a-section>span.a-size-large.a-color-price') ) )
 		{
 			//sale V3
-			p.sale = sale.textContent.trim();
-			version( p ,'sale', 3, p.sale );
+			offer.price = sale.textContent.trim();
+			version( p ,'sale', 3, offer.price );
 		}
 		else if( (sale = document.querySelector('div#formats div#tmmSwatches li a>span:last-child') ) )
 		{
 			let toSearch	= 'from $';
 			let index		=  sale.textContent.trim().indexOf( toSearch );
-			p.sale			= '';
+			offer.price		= '';
 
 			if( index > -1 )
 			{
-				p.sale = sale.textContent.trim().substring( index+toSearch.length );
+				offer.price = sale.textContent.trim().substring( index+toSearch.length );
 			}
-			version( p ,'sale', 4, p.sale );
+			version( p ,'sale', 4, offer.price );
 		}
 
 
@@ -329,29 +390,29 @@ class AmazonParser
 
 		if( shipping )
 		{
-			version( p ,'shipping', 3, p.shipping );
-			p.shipping =  shipping.textContent;
+			version( p ,'shipping', 3, offer.shipping );
+			offer.shipping =  shipping.textContent;
 		}
 
-		if( typeof p.shipping === "undefined" )
+		if( typeof offer.shipping === "undefined" )
 		{
 
 			shipping = document.querySelector('a.cfs-free-shipping');
 
 			if( shipping )
 			{
-				p.shipping = shipping.textContent.trim();
-				version( p ,'shipping', 1, p.shipping );
+				offer.shipping = shipping.textContent.trim();
+				version( p ,'shipping', 1, offer.shipping );
 			}
 		}
 
 
-		if( typeof p.shipping === "undefined" )
+		if( typeof offer.shipping === "undefined" )
 		{
 			shipping = document.querySelector('#priceblock_ourprice_row');
 			if( shipping )
 			{
-				p.shipping = shipping.textContent.trim().replace(/\n/g,' ').replace(/.*(\$\d+(\.\d+)? shipping).*/,'$1');
+				offer.shipping = shipping.textContent.trim().replace(/\n/g,' ').replace(/.*(\$\d+(\.\d+)? shipping).*/,'$1');
 				version( p ,'shipping', 2, p.price );
 			}
 		}
@@ -360,15 +421,24 @@ class AmazonParser
 
 		if( fullfilled )
 		{
-			p.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('fulfilled by amazon') ? 'AMAZON':'';
-			version( p ,'fullfilled', 1, p.fullfilled_by );
+			offer.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('fulfilled by amazon') ? 'AMAZON':'';
+			version( p ,'fullfilled', 1, offer.fullfilled_by );
 		}
-		if(fullfilled && p.fullfilled_by === '' )
+		if(fullfilled && offer.fullfilled_by === '' )
 		{
-			p.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('ships from and sold by') ? 'VENDOR':'';
-			version( p ,'fullfilled', 2, p.fullfilled_by );
+			offer.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('ships from and sold by') ? 'VENDOR':'';
+			version( p ,'fullfilled', 2, offer.fullfilled_by );
 		}
 
+
+		if( offer.price )
+		{
+			p.price == offer.price;
+
+			offer.date = date;
+			offer.dateStr = dateStr;
+			p.offers.push( offer );
+		}
 
 
 
@@ -544,6 +614,7 @@ class AmazonParser
 			var data2   = sub1.indexOf('};')+1;
 			var data3   = sub1.substring(0,data2).replace(/'/g,'"');
 
+			try{
 			var z		= JSON.parse( data3 );
 
 			for(var i=0;i<z.colorImages.initial.length;i++)
@@ -553,6 +624,11 @@ class AmazonParser
 			}
 
 			version( p ,'images', 1, '' );
+			}
+			catch(e)
+			{
+				console.log('It fail to get images');
+			}
 		}
 
 		imagesElement = document.querySelector('img#miniATF_image.a-dynamic-image.miniATFImage');
@@ -718,39 +794,43 @@ class AmazonParser
 	{
 		var box = document.querySelector('#desktop_buybox');
 
-		var product = {};
-
-		product.asin 		= this.getValueSelector(box,'input[name="ASIN"]');
-		//product.merchant_id	= inputLmbda(box,"merchantID");
-		//product.selling_customer_id	= inputLmbda(box,"sellingCustomerID");
-		//product.sale 		= this.getValueSelector( box, '#price_inside_buybox' );
-
-		let shipFromSold	= this.getValueSelector( box, '#merchant-info');
-		let shipTextx		= '';
-
-		if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
+		if( box )
 		{
-			shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
+			var product = {};
+
+			product.asin 		= this.getValueSelector(box,'input[name="ASIN"]');
+
+			//product.merchant_id	= inputLmbda(box,"merchantID");
+			//product.selling_customer_id	= inputLmbda(box,"sellingCustomerID");
+			//product.sale 		= this.getValueSelector( box, '#price_inside_buybox' );
+
+			let shipFromSold	= this.getValueSelector( box, '#merchant-info');
+			let shipTextx		= '';
+
+			if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
+			{
+				shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
+			}
+
+			let fullfilled_by = '';
+			let vendor_name		= '';
+
+			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
+			{
+				fullfilled_by	= 'AMAZON';
+				vendor_name		= 'Amazon.com';
+			}
+
+			let offer = {
+				rsid			: this.getValueSelector( box, 'input[name="rsid"]')
+				,price			: this.getValueSelector( box, '#price_inside_buybox' )
+				,merchantId		: this.getValueSelector( box, 'input[name="merchantID"]')
+				,shipping		: this.getValueSelector( box, '#price-shipping-message')
+				,vendor_name	: vendor_name
+			}
+
+			product.offers = [ offer ];
 		}
-
-		let fullfilled_by = '';
-		let vendor_name		= '';
-
-		if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
-		{
-			fullfilled_by	= 'AMAZON';
-			vendor_name		= 'Amazon.com';
-		}
-
-		let offer = {
-			rsid			: this.getValueSelector( box, 'input[name="rsid"]')
-			,price			: this.getValueSelector( box, '#price_inside_buybox' )
-			,merchantId		: this.getValueSelector( box, 'input[name="merchantID"]')
-			,shipping		: this.getValueSelector( box, '#price-shipping-message')
-			,vendor_name	: vendor_name
-		}
-
-		product.offers = [ offer ];
 
 		return product;
 	}
@@ -821,6 +901,27 @@ class AmazonParser
 
 	parseProductSearchList()
 	{
+		let parameters	= this.getParameters();
+		let search		= [];
+		let paramKeys	= ['field-keywords'];
+
+		paramKeys.forEach((key)=>
+		{
+			if( key in parameters )
+			{
+				if( Array.isArray( parameters[ key ] ) )
+				{
+					parameters[key].forEach((value)=>{ search.push( value ) });
+				}
+				else
+				{
+					search.push( parameters[ key ] );
+				}
+			}
+		});
+
+		console.log( 'Parameters',parameters );
+
 		let fl = (i)=> i<10 ? '0'+i : i;
 
 		let date	= new Date();
@@ -832,25 +933,44 @@ class AmazonParser
 
 		items.forEach(( i)=>
 		{
-			let title = this.getValueSelector(i,'a.s-access-detail-page' );
-			if( title == null )
+			let a	  = i.querySelector('a.s-access-detail-page');
+
+			if( a == null )
 				return;
+
+			let title = a.getAttribute('title');
+
+			if( !title )
+				return;
+
+			let url	= this.cleanPicassoRedirect( a.getAttribute('href') );
 
 			let producer_name = '';
 
-			if( this.getValueSelector( i, 'div > div:nth-child(5) > div:nth-child(2) > span:nth-child(1)') == 'by' )
-				producer_name = this.getValueSelector(i,'div > div:nth-child(5) > div:nth-child(2) > span:nth-child(2)');
-			else if( this.getValueSelector(i,'div > div:nth-child(3) > div:nth-child(2) > span:nth-child(1)') == 'by' )
-				producer_name = this.getValueSelector(i,'div > div:nth-child(5) > div:nth-child(2) > span:nth-child(2)');
-			else if( this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(1)') == 'by' )
-				producer_name = this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(2)');
-			else if( this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(1)') == 'by' )
-				producer_name = this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(2)');
-			else if( this.getValueSelector(i,'div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(1)') == 'by' )
-				producer_name = this.getValueSelector(i,'#result_17 > div > div > div > div.a-fixed-left-grid-col.a-col-right > div.a-row.a-spacing-small > div:nth-child(2) > span:nth-child(2)');
+
+			let pn_selectors =
+			{
+				'div>div:nth-child(5)>div:nth-child(2)>span:nth-child(1)':'div>div:nth-child(5)>div:nth-child(2)>span:nth-child(2)'
+				,'div>div:nth-child(3)>div:nth-child(2)>span:nth-child(1)':'div>div:nth-child(5)>div:nth-child(2)>span:nth-child(2)'
+				,'div>div>div>div.a-fixed-left-grid-col.a-col-right>div.a-row.a-spacing-small>div:nth-child(2)>span:nth-child(1)':'div>div>div>div.a-fixed-left-grid-col.a-col-right>div.a-row.a-spacing-small>div:nth-child(2)>span:nth-child(2)'
+			};
+
+			let keys = Object.keys( pn_selectors );
+
+			for(let j=0;j<keys.length;j++ )
+			{
+				if( this.getValueSelector(i, keys[j ] ) == 'by' )
+				{
+					producer_name = this.getValueSelector(i, pn_selectors[ keys[j] ] );
+					break;
+				}
+			}
 
 			////let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-small > .a-row.a-spacing-none:last-of-type');
 			//let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-mini > .a-row.a-spacing-none:last-of-type');
+
+			if( !producer_name )
+				producer_name = '';
 
 			let  offersPrice = Array.from( i.querySelectorAll('a>span.a-offscreen'));
 
@@ -869,7 +989,7 @@ class AmazonParser
 
 				let offer		= {
 					price			: offerElement.textContent.trim()
-					,url			: offerElement.parentElement.getAttribute('href')
+					,url			: this.cleanPicassoRedirect( offerElement.parentElement.getAttribute('href') )
 					,description	: description
 					,date			: dateStr
 					,time			: date.toISOString()
@@ -894,7 +1014,7 @@ class AmazonParser
 					stock.push
 					({
 						qty		: text.replace(/.*Only (\d+) left in stock.*/,'$1' )
-						,url	: href.getAttribute('href')
+						,url	: this.cleanPicassoRedirect( href.getAttribute('href') )
 						,date	: dateStr
 						,time	: date.toISOString()
 					});
@@ -907,10 +1027,12 @@ class AmazonParser
 
 				let p = {
 					asin		: i.getAttribute('data-asin')
-					,producer	: producer_name
+					,url		: url
+					,producer	: producer_name.toLowerCase()
 					,title	: title.replace(/^\[Sponsored\](.*)$/,'$1')
 					,offers : offers
 					,stock	: stock
+					,search	: search
 				};
 
 				if( p.asin )
@@ -921,8 +1043,77 @@ class AmazonParser
 		return products;
 	}
 
+	//Test with laptop search ex Apire e5
+	parseProductSearchList2()
+	{
+		let items = Array.from( document.querySelectorAll('#resultsCol li[data-asin]') );
+
+		let products = [];
+
+		items.forEach((i)=>
+		{
+			let product = {};
+			let a = i.querySelector('div > div:nth-child(3) > div:nth-child(1) > a[title]');
+
+			if( !a )
+				return;
+
+			product.title	= a.getAttribute('title');
+			product.asin	= i.getAttribute('asin');
+			product.link	= a.getAttribute('href');
+
+
+			let producer_name = '';
+
+			if( this.getValueSelector(i, 'div > div:nth-child(3) > div:nth-child(2) > span:nth-child(1)') == 'by' )
+			{
+				producer_name = this.getValueSelector(i,'div > div:nth-child(3) > div:nth-child(2) > span:nth-child(2)');
+			}
+
+			let shipping  = this.getValueSelector(i,'div > div:nth-child(4) > div:nth-child(2) > div:nth-child(2) > span');
+
+			let offer	= {};
+
+			if( /\bshipping\b/i.test( shipping ) )
+			{
+				offer.shipping = shipping;
+			}
+			product.price = this.getValueSelector(i,'span.a-offscreen');
+			offer.price = product.price;
+			let prime = i.querySelector('i[aria-label="Prime"]');
+
+			if( prime )
+				offer.is_prime = true;
+
+			product.producer	= producer_name.toLowerCase();
+			product.offers	= [];
+			product.stock	= [];
+
+			if( offer.price )
+				product.offers.push( offer );
+
+			products.push( product );
+			console.log( product );
+		});
+
+		return products;
+	}
+
 	mergeProducts()
 	{
 
+	}
+
+	cleanPicassoRedirect( href )
+	{
+		if( href.indexOf('/picassoRedirect.html' ) == -1 )
+		{
+			return href;
+		}
+		let start = href.indexOf('https%3A%2F%2F');
+		let end   =href.indexOf('&qualifier');
+
+		let realUrl = decodeURIComponent( href.substr( start , end-start ) );
+		return realUrl;
 	}
 }
