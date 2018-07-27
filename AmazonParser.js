@@ -25,9 +25,17 @@ class AmazonParser
 	*/
 
 
-	getParameters()
+	getParameters( url )
 	{
-		let x = window.location.search;
+
+		let start 	= url.indexOf('?');
+		let end 	=  url.indexOf('#');
+
+		if( start === -1 )
+			return {};
+
+		let x = url.substring(start+1, end == -1 ? url.length : end  );
+
 		let finalString = x;
 		if( finalString.indexOf('?') === 0 )
 		{
@@ -44,7 +52,7 @@ class AmazonParser
 
 			if( s.length > 1 )
 			{
-				let value = decodeURIComponent( s[ 1 ] ).toLowerCase();
+				let value = decodeURIComponent( s[ 1 ] ).replace(/\+/g,' ').toLowerCase();
 
 				if( s[0] in obj )
 				{
@@ -95,7 +103,6 @@ class AmazonParser
 				version(p,'rating',1, p.rating );
 			}
 
-
 			var nrating = products[i].querySelector('.product-rating:not([title])');
 			if( nrating  )
 			{
@@ -134,10 +141,16 @@ class AmazonParser
 		p.stock		= [];
 		p.parsed	= date;
 		p.parsedDates	= [ dateStr ];
+		p.search		= [];
 
-		var version		= this.getVersionLambda('getProductFromProductPage');
+		this.getSearchTerms( window.location.search ).forEach((term)=>
+		{
+			p.search.push( term );
+		});
 
-		p.url 	= window.location.href;
+		var version	= this.getVersionLambda('getProductFromProductPage');
+
+		p.url	= window.location.href;
 		p.dateParsed	= new Date().toLocaleString('en-US', { hour12: false });
 
 		version( p,'extracted',1,window.location.href );
@@ -174,14 +187,15 @@ class AmazonParser
 		//https://www.amazon.com/dp/B01HDNSF3K/ref=sxr_pa_click_within_right_3?pf_rd_m=&pf_rd_p=&pf_rd_r=&pd_rd_wg=5I2b0&pf_rd_s=desktop-rhs-carousels&pf_rd_t=301&pd_rd_w=ykYhM&pf_rd_i=lenovo+amd+laptop&pd_rd_r=&psc=1
 		if( producer && p.producer === "" )
 		{
-			var href = producer.getAttribute('href');
-			p.producer = href.substring(1, href.indexOf('/',1) );
+			var href	= producer.getAttribute('href');
+			p.producer	= href.substring(1, href.indexOf('/',1) );
 			version( p , 'producer', 2, p.producer );
 		}
 
 		if( p.producer === "" )
 		{
 			producer = document.querySelector('#brandBylineWrapper #brand');
+
 			if( producer )
 			{
 				p.producer = producer.textContent.trim();
@@ -382,6 +396,8 @@ class AmazonParser
 			}
 			version( p ,'sale', 4, offer.price );
 		}
+
+
 
 
 		//Shipping
@@ -901,7 +917,7 @@ class AmazonParser
 
 	parseProductSearchList()
 	{
-		let parameters	= this.getParameters();
+		let parameters	= this.getParameters( window.location.search );
 		let search		= [];
 		let paramKeys	= ['field-keywords'];
 
@@ -945,6 +961,16 @@ class AmazonParser
 
 			let url	= this.cleanPicassoRedirect( a.getAttribute('href') );
 
+			let parameters = this.getParameters( url );
+
+			let qids	= [];
+
+			if( 'qid' in parameters )
+			{
+				qids.push( parameters.qid );
+			}
+
+
 			let producer_name = '';
 
 
@@ -977,7 +1003,7 @@ class AmazonParser
 
 			let offers = [];
 
-			offersPrice.forEach((offerElement)=>
+			offersPrice.forEach(( offerElement )=>
 			{
 				let isPrime		= offerElement.parentElement.parentElement.querySelector('[aria-label="Prime"]');
 				let description	= null;
@@ -994,6 +1020,9 @@ class AmazonParser
 					,date			: dateStr
 					,time			: date.toISOString()
 				}
+
+				if( qids.length )
+					offer.qid = qids[ 0 ];
 
 				if( isPrime )
 					offer.is_prime = true;
@@ -1021,18 +1050,18 @@ class AmazonParser
 				}
 			}
 
-
 			if( offersPrice.length )
 			{
 
 				let p = {
-					asin		: i.getAttribute('data-asin')
-					,url		: url
-					,producer	: producer_name.toLowerCase()
+					asin	: i.getAttribute('data-asin')
+					,url	: url
 					,title	: title.replace(/^\[Sponsored\](.*)$/,'$1')
-					,offers : offers
+					,offers	: offers
 					,stock	: stock
 					,search	: search
+					,qids	: qids
+					,producer	: producer_name.toLowerCase()
 				};
 
 				if( p.asin )
@@ -1074,6 +1103,14 @@ class AmazonParser
 
 			let offer	= {};
 
+			let params	= this.getParameters( product.link );
+
+			if( 'qid' in params )
+			{
+				offer.qid		= params.qid;
+				product.qids	= [ qid ];
+			}
+
 			if( /\bshipping\b/i.test( shipping ) )
 			{
 				offer.shipping = shipping;
@@ -1113,7 +1150,31 @@ class AmazonParser
 		let start = href.indexOf('https%3A%2F%2F');
 		let end   =href.indexOf('&qualifier');
 
-		let realUrl = decodeURIComponent( href.substr( start , end-start ) );
+		let realUrl = decodeURIComponent( href.substr( start , end-start ) ).replace(/\+/g,' ');
 		return realUrl;
+	}
+
+	getSearchTerms( url )
+	{
+		let parameters	= this.getParameters( url );
+		let search		= [];
+		let paramKeys	= ['field-keywords'];
+
+		paramKeys.forEach((key)=>
+		{
+			if( key in parameters )
+			{
+				if( Array.isArray( parameters[ key ] ) )
+				{
+					parameters[key].forEach((value)=>{ search.push( value.trim() ) });
+				}
+				else
+				{
+					search.push( parameters[ key ].trim() );
+				}
+			}
+		});
+
+		return search;
 	}
 }
