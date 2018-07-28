@@ -127,11 +127,8 @@ class AmazonParser
 
 	getProductFromProductPage()
 	{
-		let fl = (i)=> i<10 ? '0'+i : i;
 
 		let date	= new Date();
-		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
-
 
 		// jshint shadow: true
 		var p 		= {};
@@ -1090,6 +1087,8 @@ class AmazonParser
 			product.title	= a.getAttribute('title');
 			product.asin	= i.getAttribute('asin');
 			product.link	= a.getAttribute('href');
+			product.time		= new Date();
+			product.parseDate	= this.getDateString( product.time );
 
 
 			let producer_name = '';
@@ -1176,5 +1175,13 @@ class AmazonParser
 		});
 
 		return search;
+	}
+
+	getDateString( date )
+	{
+		let fl = (i)=> i<10 ? '0'+i : i;
+		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
+
+		return dateStr;
 	}
 }
