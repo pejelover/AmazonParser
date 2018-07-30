@@ -137,7 +137,8 @@ class AmazonParser
 		p.offers 	= [];
 		p.stock		= [];
 		p.parsed	= date;
-		p.parsedDates	= [ dateStr ];
+
+		p.parsedDates	= [ this.getDateString( date ) ];
 		p.search		= [];
 
 		this.getSearchTerms( window.location.search ).forEach((term)=>
@@ -878,7 +879,8 @@ class AmazonParser
 		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( href ) )
 			return 'VENDORS_PAGE';
 
-		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( href ) )
+		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( href ) ||
+			/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( href ) )
 			return 'PRODUCT_PAGE';
 
 		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
