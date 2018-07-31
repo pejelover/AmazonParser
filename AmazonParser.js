@@ -110,7 +110,6 @@ class AmazonParser
 				version(p,'no_rating',1, p.number_of_ratings);
 			}
 
-
 			var pprice = products[i].querySelector('.product-price');
 
 			if( pprice )
@@ -136,7 +135,8 @@ class AmazonParser
 		p.images 	= [];
 		p.offers 	= [];
 		p.stock		= [];
-		p.parsed	= date;
+
+		p.parsed	= date.toISOString();
 
 		p.parsedDates	= [ this.getDateString( date ) ];
 		p.search		= [];
@@ -176,7 +176,7 @@ class AmazonParser
 
 		if( producer )
 		{
-			p.producer		= producer.textContent.trim();
+			p.producer		= producer.textContent.trim().toLowerCase();
 			p.producer_url	= producer.getAttribute('href');
 			version( p , 'producer', 1, p.producer );
 		}
@@ -186,7 +186,7 @@ class AmazonParser
 		if( producer && p.producer === "" )
 		{
 			var href	= producer.getAttribute('href');
-			p.producer	= href.substring(1, href.indexOf('/',1) );
+			p.producer	= href.substring(1, href.indexOf('/',1) ).toLowerCase();
 			version( p , 'producer', 2, p.producer );
 		}
 
@@ -196,7 +196,7 @@ class AmazonParser
 
 			if( producer )
 			{
-				p.producer = producer.textContent.trim();
+				p.producer = producer.textContent.trim().toLowerCase();
 				version( p , 'producer', 3, p.producer );
 			}
 		}
@@ -206,7 +206,7 @@ class AmazonParser
 			let brand = document.querySelector('#brand');
 			if( brand )
 			{
-				p.producer = brand.textContent.trim();
+				p.producer = brand.textContent.trim().toLowerCase();
 				version( p , 'producer', 4, p.producer );
 			}
 		}
@@ -216,7 +216,7 @@ class AmazonParser
 			let brand = document.querySelector('.author.notFaded');
 			if( brand )
 			{
-				p.producer = brand.textContent.trim();
+				p.producer = brand.textContent.trim().toLowerCase();
 				version( p , 'producer', 5, p.producer );
 			}
 		}
@@ -226,19 +226,17 @@ class AmazonParser
 			let brand = document.querySelector('#bylineInfo');
 			if( brand )
 			{
-				p.producer = brand.textContent.trim();
+				p.producer = brand.textContent.trim().toLowerCase();
 				version( p , 'producer', 6, p.producer );
 			}
+
 			if( p.producer == '' && brand.tagName == "A" )
 			{
 				let href = brand.getAttribute('href');
 				let clean	= href.substring( 1, href.length-1 );
-				p.producer = clean.substring(0, clean.indexOf('/') );
+				p.producer = clean.substring(0, clean.indexOf('/') ).toLowerCase();
 			}
 		}
-
-
-
 
 		var lefts	= document.querySelectorAll('span.a-size-medium.a-color-price');
 		if( lefts )
@@ -290,6 +288,7 @@ class AmazonParser
 				{
 					p.left = plefts[ i ].textContent.trim();
 					version( p ,'left', 5, p.left);
+					break;
 				}
 			}
 		}
@@ -301,6 +300,8 @@ class AmazonParser
 			if( availability )
 			{
 				let textContainer = availability.querySelector('#availability');
+				if( textContainer )
+				{
 				let text = textContainer.textContent.trim();
 
 				if( /only \d+ left in stock/i.test( text ) )
@@ -308,8 +309,6 @@ class AmazonParser
 					p.left = plefts[ i ].textContent.trim();
 					version( p ,'left', 6, p.left);
 				}
-
-
 
 				if( /Currently unavailable./i.test( text ) )
 				{
@@ -324,9 +323,7 @@ class AmazonParser
 				}
 			}
 		}
-
-
-
+		}
 
 		var choice	= document.querySelectorAll('div.ac-badge-wrapper');
 
@@ -396,8 +393,6 @@ class AmazonParser
 		}
 
 
-
-
 		//Shipping
 		//
 		let shipping = document.querySelector('#priceblock_ourprice_row #ourprice_shippingmessage b');
@@ -449,8 +444,9 @@ class AmazonParser
 		{
 			p.price == offer.price;
 
-			offer.date = date;
-			offer.dateStr = dateStr;
+			let d		= new Date();
+			offer.date 	= this.getDateString( d );
+			offer.time	= d.toISOString();
 			p.offers.push( offer );
 		}
 
@@ -628,7 +624,8 @@ class AmazonParser
 			var data2   = sub1.indexOf('};')+1;
 			var data3   = sub1.substring(0,data2).replace(/'/g,'"');
 
-			try{
+			try
+			{
 			var z		= JSON.parse( data3 );
 
 			for(var i=0;i<z.colorImages.initial.length;i++)
@@ -706,11 +703,28 @@ class AmazonParser
 	}
 
 
+	parseVariationUrlsFromPattern()
+	{
+		let divs = document.querySelectorAll('#shelfSwatchSection-size_name div[data-dp-url],#shelfSwatchSection-item_package_quantity div[data-dp-url]');
+		let variations	= Array.from( divs );
+
+		let urls = [];
+		variations.forEach((i)=>
+		{
+			let partialUrl = i.getAttribute('data-dp-url');
+
+			if( partialUrl )
+				urls.push( 'https://amazon.com/'+partialUrl );
+		});
+
+		return urls;
+	}
 
 	parseVariationUrls(name)
 	{
 		let variations = [];
 		let variationContainer = document.querySelector( name );
+
 		if( variationContainer !== null )
 		{
 			let variationsData = variationContainer.querySelectorAll('ul li');
@@ -849,8 +863,10 @@ class AmazonParser
 		return product;
 	}
 
-	getAsinFromUrl( url )
+	getAsinFromUrl( a )
 	{
+		let url = a === undefined ? window.location.href : a ;
+
 		var asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
 
 		if( asin.includes('https://' ) )
@@ -890,6 +906,12 @@ class AmazonParser
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) )
 			return 'CART_PAGE';
+
+
+		if( /marketplaceID=(\w+)&/.test( href ) )
+		{
+			return 'SEARCH_PAGE';
+		}
 	}
 
 	getValueSelector(node,selector)
@@ -937,10 +959,9 @@ class AmazonParser
 
 		console.log( 'Parameters',parameters );
 
-		let fl = (i)=> i<10 ? '0'+i : i;
 
 		let date	= new Date();
-		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
+		let dateStr = this.getDateString( date );
 
 		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
 		let items = Array.from( s );
@@ -984,7 +1005,7 @@ class AmazonParser
 
 			for(let j=0;j<keys.length;j++ )
 			{
-				if( this.getValueSelector(i, keys[j ] ) == 'by' )
+				if( this.getValueSelector( i, keys[ j ] ) == 'by' )
 				{
 					producer_name = this.getValueSelector(i, pn_selectors[ keys[j] ] );
 					break;
@@ -1179,11 +1200,133 @@ class AmazonParser
 		return search;
 	}
 
+	getProductsFromCart()
+	{
+		let form = document.querySelector('#activeCartViewForm');
+		let itemsNodeList = form.querySelectorAll('.sc-list-body[data-name="Active Items"]');
+		let items	= Array.from( itemsNodeList );
+
+		let products	= [];
+		let date		= new Date();
+
+		items.forEach((i)=>
+		{
+			let asinContainer	= i.querySelector('div[data-asin]');
+			if( !asinContainer )
+				return;
+
+			let product		= {};
+			product.asin	= asinContainer.getAttribute('data-asin');
+			product.parsed	= date.toISOString();
+
+			let link	= i.querySelector('a.sc-product-link');
+			if( link )
+				product.url	= link.getAttribute('href');
+
+			let seller	= i.querySelector('.sc-seller a');
+
+			if( seller )
+				product.sellers = [ seller.textContent.trim().toLowerCase() ];
+
+			let qtyStr 	= this.getValueSelector(i,'.sc-product-scarcity');
+
+			if( qtyStr && /^Only (\d+) left in stock/.test( qtyStr ) )
+			{
+				let stock	= {
+					qty	: qtyStr.replace(/^only (\d+) left in stock.*$/,'$1')
+					,date	: this.getDateString( date )
+					,time	: date.toISOString()
+				};
+
+				if( 'seller' in product )
+				{
+					stock.seller		= product.sellers[0];
+					stock.seller_url	= seller.getAttribute('href');
+				}
+
+				product.stock = [ stock ];
+			}
+
+			let price = this.getValueSelector(i,'span.sc-product-price');
+
+			if( price )
+			{
+				let offer = {
+					price	: price
+					,date	: this.getDateString( date )
+					,time	: date.toISOString()
+				};
+
+				if( 'seller' in product )
+				{
+					offer.seller		= product.seller;
+					offer.seller_url	= seller.getAttribute('href');
+				}
+
+				product.offers = [ offer ];
+			}
+			products.push( product );
+		});
+
+		return products;
+	}
+
 	getDateString( date )
 	{
 		let fl = (i)=> i<10 ? '0'+i : i;
 		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
 
 		return dateStr;
+	}
+
+	getProductFromSellersPage()
+	{
+		let product = {
+			sellers : []
+		};
+
+		let name = document.querySelector('#olpProductDetails h1');
+
+		if( name )
+			product.title = name.textContent.trim();
+
+		let producer = document.querySelector('#olpProductByline');
+
+		if( producer && /^by /.test( producer.textContent.trim() ) )
+			product.producer = producer.textContent.trim().replace(/^by /,'').toLowerCase();
+
+		let date		= new Date();
+		product.time	= date.toISOString();
+		product.parsedDates	=[ this.getDateString( date ) ];
+		product.asin		= this.getAsinFromUrl( window.location.href );
+
+		let divs = document.querySelectorAll('#olpOfferList div[role="row"].olpOffer');
+		let da	= Array.from( divs );
+
+		let offers	= [];
+
+		da.forEach((div)=>
+		{
+			let seller = div.querySelector('.olpSellerName span>a');
+			if( seller )
+			{
+				let offer = {
+					price	:this.getValueSelector(div,'span.olpOfferPrice.a-text-bold')
+					,seller	: seller.textContent
+					,shipping	: this.getValueSelector( div,'.olpShippingInfo')
+					,condition	: this.getValueSelector(div,'.olpCondition')
+					,seller_url	: seller.getAttribute('href')
+					,time		: product.time
+					,date		: product.parsed
+				};
+
+				product.sellers.push( seller.textContent.trim().toLowerCase() );
+
+				offers.push( offer );
+			}
+		});
+
+		product.offers = offers;
+		return product;
 	}
 }
