@@ -72,56 +72,55 @@ class AmazonParser
 
 	getProductsFromVendorInfoPageSectionProducts()
 	{
-		var pArray		= [];
-		var version		= this.getVersionLambda('VendorProductSectionParser');
-		var products	= document.queryAll('#products-results-data  .product-details');
+		let version		= this.getVersionLambda('VendorProductSectionParser');
+		let productsArray	= document.queryAll('#products-results-data  .product-details');
 
-		for(var i=0;i<products.length;i++)
+		for(var i=0;i<productsArray.length;i++)
 		{
-			var p = {};
-			p.versions = [];
+			var product = {};
+			product.versions = [];
 
-			version(p,'extracted',1,window.location.href);
+			version(product,'extracted',1,window.location.href);
 
 
-			var ptitle = products[i].querySelector('.product-title a[title]');
+			var ptitle = productsArray[i].querySelector('.product-title a[title]');
 
 			if( ptitle )
 			{
-				p.title = ptitle.getAttribute('title');
-				version(p,'title',1, p.title);
+				product.title = ptitle.getAttribute('title');
+				version(product,'title',1, product.title);
 
-				p.url 	= this.cleanPicassoRedirect( ptitle.getAttribute('href') );
-				version(p,'url',1 ,p.url );
+				product.url 	= this.cleanPicassoRedirect( ptitle.getAttribute('href') );
+				version(product,'url',1 ,product.url );
 			}
 
-			var prating = products[i].querySelector('.product-rating a[title]');
+			var prating = productsArray[i].querySelector('.product-rating a[title]');
 
 			if( prating )
 			{
-				p.rating = prating.getAttribute('title');
-				version(p,'rating',1, p.rating );
+				product.rating = prating.getAttribute('title');
+				version(product,'rating',1, product.rating );
 			}
 
-			var nrating = products[i].querySelector('.product-rating:not([title])');
+			var nrating = productsArray[i].querySelector('.product-rating:not([title])');
 			if( nrating  )
 			{
-				p.number_of_ratings = nrating.textContent.trim();
-				version(p,'no_rating',1, p.number_of_ratings);
+				product.number_of_ratings = nrating.textContent.trim();
+				version(product,'no_rating',1, product.number_of_ratings);
 			}
 
-			var pprice = products[i].querySelector('.product-price');
+			var pprice = productsArray[i].querySelector('.product-price');
 
 			if( pprice )
 			{
-				p.price = pprice.textContent.trim();
-				version(p,'no_price',1, p.price );
+				product.price = pprice.textContent.trim();
+				version(product,'no_price',1, product.price );
 			}
 
-			pArray.push( p );
+			productsArray.push( product );
 		}
 
-		return pArray;
+		return productsArray;
 	}
 
 	getProductFromProductPage()
@@ -130,35 +129,33 @@ class AmazonParser
 		let date	= new Date();
 
 		// jshint shadow: true
-		var p 		= {};
-		p.versions	= [];
-		p.images 	= [];
-		p.offers 	= [];
-		p.stock		= [];
+		let product 		= {};
+		product.versions	= [];
+		product.images 	= [];
+		product.offers 	= [];
+		product.stock		= [];
 
-		p.parsed	= date.toISOString();
-
-		p.parsedDates	= [ this.getDateString( date ) ];
-		p.search		= [];
+		product.parsed	= date.toISOString();
+		product.parsedDates	= [ this.getDateString( date ) ];
+		product.search		= [];
 
 		this.getSearchTerms( window.location.search ).forEach((term)=>
 		{
-			p.search.push( term );
+			product.search.push( term );
 		});
 
-		var version	= this.getVersionLambda('getProductFromProductPage');
+		let version	= this.getVersionLambda('getProductFromProductPage');
 
-		p.url	= window.location.href;
-		p.dateParsed	= new Date().toLocaleString('en-US', { hour12: false });
+		product.url	= window.location.href;
 
-		version( p,'extracted',1,window.location.href );
+		version( product,'extracted',1,window.location.href );
 
-		var description 	= document.querySelector('#productDescription>p');
+		let description 	= document.querySelector('#productDescription>p');
 
 		if( description )
 		{
-			p.description	= description.textContent.trim();
-			version( p , 'description', 1, p.description );
+			product.description	= description.textContent.trim();
+			version( product , 'description', 1, product.description );
 		}
 
 
@@ -166,75 +163,76 @@ class AmazonParser
 
 		if( productTitle )
 		{
-			p.title = productTitle.textContent.trim();
-			version( p , 'title', 1, p.title );
+			product.title = productTitle.textContent.trim();
+			version( product , 'title', 1, product.title );
 		}
 
 		var producer 	= document.querySelector('#bylineInfo_feature_div a');
 
-		p.producer = "";
+		product.producer = '';
 
 		if( producer )
 		{
-			p.producer		= producer.textContent.trim().toLowerCase();
-			p.producer_url	= producer.getAttribute('href');
-			version( p , 'producer', 1, p.producer );
+			product.producer		= producer.textContent.trim().toLowerCase();
+			product.producer_url	= producer.getAttribute('href');
+			version( product , 'producer', 1, product.producer );
 		}
 
 		//Tes with
 		//https://www.amazon.com/dp/B01HDNSF3K/ref=sxr_pa_click_within_right_3?pf_rd_m=&pf_rd_p=&pf_rd_r=&pd_rd_wg=5I2b0&pf_rd_s=desktop-rhs-carousels&pf_rd_t=301&pd_rd_w=ykYhM&pf_rd_i=lenovo+amd+laptop&pd_rd_r=&psc=1
-		if( producer && p.producer === "" )
+		if( producer && product.producer === '' )
 		{
 			var href	= producer.getAttribute('href');
-			p.producer	= href.substring(1, href.indexOf('/',1) ).toLowerCase();
-			version( p , 'producer', 2, p.producer );
+			product.producer	= href.substring(1, href.indexOf('/',1) ).toLowerCase();
+			version( product , 'producer', 2, product.producer );
 		}
 
-		if( p.producer === "" )
+		if( product.producer === '' )
 		{
 			producer = document.querySelector('#brandBylineWrapper #brand');
 
 			if( producer )
 			{
-				p.producer = producer.textContent.trim().toLowerCase();
-				version( p , 'producer', 3, p.producer );
+				product.producer = producer.textContent.trim().toLowerCase();
+				version( product , 'producer', 3, product.producer );
 			}
 		}
 
-		if( p.producer === "" )
+		if( product.producer === "" )
 		{
 			let brand = document.querySelector('#brand');
 			if( brand )
 			{
-				p.producer = brand.textContent.trim().toLowerCase();
-				version( p , 'producer', 4, p.producer );
+				product.producer = brand.textContent.trim().toLowerCase();
+				version( product , 'producer', 4, product.producer );
 			}
 		}
 
-		if( p.producer === "" )
+		if( product.producer === "" )
 		{
 			let brand = document.querySelector('.author.notFaded');
 			if( brand )
 			{
-				p.producer = brand.textContent.trim().toLowerCase();
-				version( p , 'producer', 5, p.producer );
+				product.producer = brand.textContent.trim().toLowerCase();
+				version( product , 'producer', 5, product.producer );
 			}
 		}
 
-		if( p.producer === "" )
+		if( product.producer === "" )
 		{
 			let brand = document.querySelector('#bylineInfo');
+
 			if( brand )
 			{
-				p.producer = brand.textContent.trim().toLowerCase();
-				version( p , 'producer', 6, p.producer );
+				product.producer = brand.textContent.trim().toLowerCase();
+				version( product , 'producer', 6, product.producer );
 			}
 
-			if( p.producer == '' && brand.tagName == "A" )
+			if( product.producer == '' && brand && brand.tagName == "A" )
 			{
 				let href = brand.getAttribute('href');
 				let clean	= href.substring( 1, href.length-1 );
-				p.producer = clean.substring(0, clean.indexOf('/') ).toLowerCase();
+				product.producer = clean.substring(0, clean.indexOf('/') ).toLowerCase();
 			}
 		}
 
@@ -242,7 +240,7 @@ class AmazonParser
 		if( lefts )
 		{
 			var plefts	= Array.from( lefts );
-			p.left		= '';
+			product.left		= '';
 
 			//"Only 6 left in stock - order soon."
 			//
@@ -250,20 +248,20 @@ class AmazonParser
 			{
 				if( /only \d+ left in stock/i.test( plefts[ i ].textContent ) )
 				{
-					p.left = plefts[ i ].textContent.trim();
-					version( p ,'left', 1, p.left);
+					product.left = plefts[ i ].textContent.trim();
+					version( product ,'left', 1, product.left);
 					break;
 				}
 				if( /Currently unavailable./i.test( plefts[ i ].textContent ) )
 				{
-					p.left = 'Currently unavailable.';
-					version( p ,'left', 2, p.left);
+					product.left = 'Currently unavailable.';
+					version( product ,'left', 2, product.left);
 					break;
 				}
 			}
 		}
 
-		if( typeof p.left  === "undefined" || p.left === '' )
+		if( typeof product.left  === "undefined" || product.left === '' )
 		{
 			let availability = document.querySelectorAll('[data-feature-name="availability"]');
 
@@ -272,28 +270,28 @@ class AmazonParser
 				let text = availability[ i ].textContent.replace(/\s+/gm,' ').trim();
 				if( text == 'In Stock.' )
 				{
-					p.left	= 'In Stock.';
-					version( p ,'left', 3, p.left);
+					product.left	= 'In Stock.';
+					version( product ,'left', 3, product.left);
 					break;
 				}
 
 				if( /Available from these sellers./i.test( text ) )
 				{
-					p.left = 'Available from other sellers';
-					version( p ,'left', 4, p.left);
+					product.left = 'Available from other sellers';
+					version( product ,'left', 4, product.left);
 					break;
 				}
 
 				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
 				{
-					p.left = plefts[ i ].textContent.trim();
-					version( p ,'left', 5, p.left);
+					product.left = plefts[ i ].textContent.trim();
+					version( product ,'left', 5, product.left);
 					break;
 				}
 			}
 		}
 
-		if( typeof p.left  === "undefined" || p.left === '' )
+		if( typeof product.left  === "undefined" || product.left === '' )
 		{
 			let availability = document.getElementById('availabilityInsideBuyBox_feature_div');
 
@@ -306,20 +304,20 @@ class AmazonParser
 
 				if( /only \d+ left in stock/i.test( text ) )
 				{
-					p.left = plefts[ i ].textContent.trim();
-					version( p ,'left', 6, p.left);
+					product.left = plefts[ i ].textContent.trim();
+					version( product ,'left', 6, product.left);
 				}
 
 				if( /Currently unavailable./i.test( text ) )
 				{
-					p.left = 'Currently unavailable.';
-					version( p ,'left', 7, p.left);
+					product.left = 'Currently unavailable.';
+					version( product ,'left', 7, product.left);
 				}
 
 				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
 				{
-					p.left = plefts[ i ].textContent.trim();
-					version( p ,'left', 8, p.left);
+					product.left = plefts[ i ].textContent.trim();
+					version( product ,'left', 8, product.left);
 				}
 			}
 		}
@@ -338,18 +336,18 @@ class AmazonParser
 				if( /amazon's choice/i.test( text  ) )
 				{
 					let index	= text.toLowerCase().indexOf('amazon\'s choice for');
-					p.choice	= text.substring( index );
-					version( p ,'choice', 1, p.left);
+					product.choice	= text.substring( index );
+					version( product ,'choice', 1, product.left);
 					break;
 				}
 			}
 		}
 
-		p.asin	= this.getAsinFromUrl( window.location.href );
+		product.asin	= this.getAsinFromUrl( window.location.href );
 
-		if( p.asin )
+		if( product.asin )
 		{
-			version( p, 'ASIN',1 ,p.asin );
+			version( product, 'ASIN',1 ,product.asin );
 		}
 
 		var sale = document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
@@ -359,25 +357,25 @@ class AmazonParser
 		{
 			//Sael v4
 			offer.price = sale.textContent.trim();
-			version( p ,'sale', 4, offer.price );
+			version( product ,'sale', 4, offer.price );
 		}
 		if( sale )
 		{
 			//sale V1
 			offer.price 	 = sale.textContent.replace(/Sale:/g,'').trim();
-			version( p ,'sale', 1, offer.price );
+			version( product ,'sale', 1, offer.price );
 		}
 		else if( (sale = document.querySelector('#price span.a-size-medium.a-color-price')) )
 		{
 			//sale V2
 			offer.price= sale.textContent.trim();
-			version( p ,'sale', 2, offer.price );
+			version( product ,'sale', 2, offer.price );
 		}
 		else if( ( sale = document.querySelector('div.a-section>span.a-size-large.a-color-price') ) )
 		{
 			//sale V3
 			offer.price = sale.textContent.trim();
-			version( p ,'sale', 3, offer.price );
+			version( product ,'sale', 3, offer.price );
 		}
 		else if( (sale = document.querySelector('div#formats div#tmmSwatches li a>span:last-child') ) )
 		{
@@ -389,7 +387,7 @@ class AmazonParser
 			{
 				offer.price = sale.textContent.trim().substring( index+toSearch.length );
 			}
-			version( p ,'sale', 4, offer.price );
+			version( product ,'sale', 4, offer.price );
 		}
 
 
@@ -399,7 +397,7 @@ class AmazonParser
 
 		if( shipping )
 		{
-			version( p ,'shipping', 3, offer.shipping );
+			version( product ,'shipping', 3, offer.shipping );
 			offer.shipping =  shipping.textContent;
 		}
 
@@ -411,7 +409,7 @@ class AmazonParser
 			if( shipping )
 			{
 				offer.shipping = shipping.textContent.trim();
-				version( p ,'shipping', 1, offer.shipping );
+				version( product ,'shipping', 1, offer.shipping );
 			}
 		}
 
@@ -422,7 +420,7 @@ class AmazonParser
 			if( shipping )
 			{
 				offer.shipping = shipping.textContent.trim().replace(/\n/g,' ').replace(/.*(\$\d+(\.\d+)? shipping).*/,'$1');
-				version( p ,'shipping', 2, p.price );
+				version( product ,'shipping', 2, product.price );
 			}
 		}
 
@@ -431,29 +429,27 @@ class AmazonParser
 		if( fullfilled )
 		{
 			offer.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('fulfilled by amazon') ? 'AMAZON':'';
-			version( p ,'fullfilled', 1, offer.fullfilled_by );
+			version( product ,'fullfilled', 1, offer.fullfilled_by );
 		}
 		if(fullfilled && offer.fullfilled_by === '' )
 		{
 			offer.fullfilled_by = fullfilled.textContent.trim().toLowerCase().includes('ships from and sold by') ? 'VENDOR':'';
-			version( p ,'fullfilled', 2, offer.fullfilled_by );
+			version( product ,'fullfilled', 2, offer.fullfilled_by );
 		}
 
 
 		if( offer.price )
 		{
 
-			p.price		= offer.price;
+			product.price		= offer.price;
 			let d		= new Date();
-			offer.date 	= this.getDateString( d );
-			offer.time	= d.toISOString();
-			p.offers.push( offer );
+			product.offers.push( offer );
 		}
 
 
 
 		//Especs
-		p.spec= {};
+		product.spec= {};
 
 		var specTable = document.querySelectorAll('[id="product-specification-table"]');
 		if( specTable.length )
@@ -466,12 +462,12 @@ class AmazonParser
 				{
 					var th = tr[k].querySelector('th');
 					var td = tr[k].querySelector('td');
-					p.spec[ th.textContent.trim().replace(/:$/,'') ] = td.textContent.trim();
+					product.spec[ th.textContent.trim().replace(/:$/,'') ] = td.textContent.trim();
 				}
 			}
 
 			//V1
-			version( p ,'specs', 1, '' );
+			version( product ,'specs', 1, '' );
 		}
 
 		var technical_specs = document.querySelectorAll('#technicalSpecifications_section_1 tr');
@@ -483,26 +479,26 @@ class AmazonParser
 				var tr = technical_specs[i];
 				var key = tr.querySelector('th').textContent.trim().replace(/:$/,'');
 				var value = tr.querySelector('td').textContent.trim();
-				p.spec[ key ] = value;
+				product.spec[ key ] = value;
 			}
 
 			//V2
-			version( p ,'specs', 2 , '');
+			version( product ,'specs', 2 , '');
 		}
 
 		//Features
 		var features = document.querySelectorAll('#feature-bullets-btf .bucket.normal li');
-		p.features = [];
+		product.features = [];
 
 		if( features.length )
 		{
 			for(var i=0;i<features.length;i++)
 			{
-				p.features.push(features[ i ].textContent.trim() );
+				product.features.push(features[ i ].textContent.trim() );
 			}
 
 			//V1
-			version( p ,'features', 1, '' );
+			version( product ,'features', 1, '' );
 		}
 
 		features = document.querySelectorAll('#featurebullets_feature_div li:not(.aok-hidden)');
@@ -511,14 +507,14 @@ class AmazonParser
 		{
 			for(var i=0;i<features.length;i++)
 			{
-				p.features.push(features[ i ].textContent.trim() );
+				product.features.push(features[ i ].textContent.trim() );
 			}
 			//V2
-			version( p ,'features', 2, '' );
+			version( product ,'features', 2, '' );
 		}
 
 		//Details
-		p.productDetails	= {};
+		product.productDetails	= {};
 
 		var details = document.querySelectorAll('#productDetailsTable .content li');
 
@@ -528,10 +524,10 @@ class AmazonParser
 			{
 				var detail = details[i].querySelector('b').textContent.trim().replace(/:$/,'');
 				var fullDetail = details[i].textContent.replace( detail, '');
-				p.productDetails[ detail.trim() ] = fullDetail.trim();
+				product.productDetails[ detail.trim() ] = fullDetail.trim();
 				//V1
 			}
-			version( p ,'details', 1, '' );
+			version( product ,'details', 1, '' );
 		}
 
 		details = document.querySelectorAll('#productDetails_detailBullets_sections1 tr');
@@ -542,10 +538,10 @@ class AmazonParser
 			{
 				var detail					= details[ i ].querySelector('th').textContent.trim().replace(/:$/,'');
 				var fullDetail2 			= details[ i ].querySelector('td').textContent;
-				p.productDetails[ detail ]	= fullDetail2.trim();
+				product.productDetails[ detail ]	= fullDetail2.trim();
 			}
 			//V2
-			version( p ,'details', 2, '' );
+			version( product ,'details', 2, '' );
 		}
 
 		var details = document.querySelectorAll('#prodDetails table tr');
@@ -559,59 +555,59 @@ class AmazonParser
 
 				if( label && value )
 				{
-					p.productDetails[ label.textContent.trim().replace(/:$/,'') ] = value.textContent.trim();
+					product.productDetails[ label.textContent.trim().replace(/:$/,'') ] = value.textContent.trim();
 				}
 			}
 			//V3
-			version( p ,'details', 3, '' );
+			version( product ,'details', 3, '' );
 		}
 
 		var prating = document.querySelector('#averageCustomerReviews_feature_div #acrPopover');
 		if( prating )
 		{
 			///^-?\d*(\.\d+)?$/
-			p.rating = prating.getAttribute('title').trim().replace(/(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
+			product.rating = prating.getAttribute('title').trim().replace(/(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
 			//         prating.getAttribute('title').trim().replace(/.*(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
-			version(p,'rating',1, p.rating );
+			version(product,'rating',1, product.rating );
 		}
 
 		var nrating = document.querySelector('#averageCustomerReviews_feature_div #acrCustomerReviewLink');
 		if( nrating )
 		{
-			p.number_of_ratings = nrating.textContent.trim().replace(/(\d+).*/,'$1');
-			version(p,'no_rating',1, p.number_of_ratings);
+			product.number_of_ratings = nrating.textContent.trim().replace(/(\d+).*/,'$1');
+			version(product,'no_rating',1, product.number_of_ratings);
 		}
 
 
-		if( typeof p.number_of_ratings === "undefined" && typeof p.productDetails['Customer Reviews'] !== "undefined")
+		if( typeof product.number_of_ratings === "undefined" && typeof product.productDetails['Customer Reviews'] !== "undefined")
 		{
-			var rating_text = p.productDetails['Customer Reviews'].replace(/.*(\d+) out of \d+ stars.*/,'$1');
-			var no_ratings	=  p.productDetails['Customer Reviews'].replace(/.*(\d+) customer reviews.*/,'$1');
+			var rating_text = product.productDetails['Customer Reviews'].replace(/.*(\d+) out of \d+ stars.*/,'$1');
+			var no_ratings	=  product.productDetails['Customer Reviews'].replace(/.*(\d+) customer reviews.*/,'$1');
 
 			if( rating_text )
 			{
-				p.rating = rating_text;
-				version(p,'rating',2, p.rating );
+				product.rating = rating_text;
+				version(product,'rating',2, product.rating );
 			}
 
 			if( no_ratings )
 			{
-				p.number_of_ratings = no_ratings;
-				version(p,'no_rating',2, p.rating );
+				product.number_of_ratings = no_ratings;
+				version(product,'no_rating',2, product.rating );
 			}
 		}
 
 		//Cleaning ratings
-		if( typeof p.number_of_ratings !== "undefined" )
+		if( typeof product.number_of_ratings !== "undefined" )
 		{
-			if( p.number_of_ratings === 'Be the first to review this product'
-				|| p.number_of_ratings.includes("Be the first to review this item") )
-			p.number_of_ratings = '0';
+			if( product.number_of_ratings === 'Be the first to review this product'
+				|| product.number_of_ratings.includes("Be the first to review this item") )
+			product.number_of_ratings = '0';
 		}
 
 
-		//if( typeof p.productDetails['Average Customer Review:'] )
-		//	delete p.productDetails['Average Customer Review:'];
+		//if( typeof product.productDetails['Average Customer Review:'] )
+		//	delete product.productDetails['Average Customer Review:'];
 
 		//Images
 		var imagesElement	= document.querySelector('#imageBlock_feature_div');
@@ -631,10 +627,10 @@ class AmazonParser
 			for(var i=0;i<z.colorImages.initial.length;i++)
 			{
 				if( z.colorImages.initial[i].hiRes );
-					p.images.push( z.colorImages.initial[i].hiRes );
+					productroduct.images.push( z.colorImages.initial[i].hiRes );
 			}
 
-			version( p ,'images', 1, '' );
+			version( product ,'images', 1, '' );
 			}
 			catch(e)
 			{
@@ -648,9 +644,9 @@ class AmazonParser
 		{
 			var imgSr = imagesElement.getAttribute('src');
 			if( imgSr )
-				p.images.push( imgSr );
+				product.images.push( imgSr );
 
-			version( p ,'images', 2, '' );
+			version( product ,'images', 2, '' );
 		}
 
 
@@ -659,7 +655,7 @@ class AmazonParser
 
 		if( vendors.length )
 		{
-			p.vendors = [];
+			product.vendors = [];
 
 			for(var i=0;i<vendors.length;i++)
 			{
@@ -671,7 +667,7 @@ class AmazonParser
 
 					if( typeof obj.url !== "undefined" )
 					{
-						p.vendors.push(  obj.url  );
+						product.vendors.push(  obj.url  );
 					}
 				}
 				catch(e)
@@ -680,7 +676,7 @@ class AmazonParser
 				}
 			}
 
-			version( p ,'vendors', 1, '' );
+			version( product ,'vendors', 1, '' );
 		}
 
 
@@ -689,17 +685,17 @@ class AmazonParser
 
 		if( otherVendors.length )
 		{
-			p.no_offers_url = otherVendors[0].getAttribute('href');
-			p.no_offers = otherVendors[0].textContent.replace(/.*\((\d+)\).*/g,'$1');
-			p.no_offers_text = otherVendors[0].textContent.trim();
-			version( p ,'no_offers', 1, '' );
+			product.no_offers_url = otherVendors[0].getAttribute('href');
+			product.no_offers = otherVendors[0].textContent.replace(/.*\((\d+)\).*/g,'$1');
+			product.no_offers_text = otherVendors[0].textContent.trim();
+			version( product ,'no_offers', 1, '' );
 		}
 
 
 
 		//Ratings
 
-		return p;
+		return product;
 	}
 
 
@@ -752,28 +748,26 @@ class AmazonParser
 	//XXX  Please standardize this function
 	//Change vendors for sellers
 	//Create products with offers instead of whaterver it returns
-	
+
 	parseOtherVendors()
 	{
 		var asin	= this.getAsinFromUrl( window.location.href );
-		var a		= document.querySelectorAll('#olpOfferList h3.olpSellerName a');
+		//var a		= document.querySelectorAll('#olpOfferList h3.olpSellerName a');
 		this.log('Vendor url match',asin);
 
 
-		var rows = document.querySelectorAll('#olpOfferList div.olpOffer');
+		var rows = Array.from( document.querySelectorAll('#olpOfferList div.olpOffer') );
 
-		var priceColumn	= document.querySelectorAll('a-column a-span2 olpPriceColumn');
+		//var priceColumn	= document.querySelectorAll('a-column a-span2 olpPriceColumn');
 
 		var productVendors	= {
 			asin		: asin
 			,vendors	: []
 		};
 
-		for(let i=0;i<rows.length;i++)
+		rows.forEach((row)=>
 		{
-
 			let objRow		= {};
-			let row			= rows[i];
 
 			let amazon		= row.querySelector('.olpSellerColumn img[alt="Amazon.com"]');
 
@@ -786,13 +780,12 @@ class AmazonParser
 				objRow.sellerName	= row.querySelector('h3.olpSellerName a').textContent;
 			}
 
+			let price = row.querySelector('.olpOfferPrice');
 
-            var price           = row.querySelector('.olpOfferPrice');
+			if( price )
+				objRow.price	= row.querySelector('.olpOfferPrice').textContent.trim();
 
-            if( price )
-			    objRow.price		= row.querySelector('.olpOfferPrice').textContent.trim();
-
-            var shipping        = row.querySelector('.olpShippingInfo');
+			var shipping        = row.querySelector('.olpShippingInfo');
 			objRow.shipping		= shipping ? shipping.textContent : '';
 			objRow.isPrime		= row.querySelector('.a-icon-prime') !== null;
 			objRow.condition	= row.querySelector('.olpCondition').textContent;
@@ -808,26 +801,36 @@ class AmazonParser
 				objRow.fullfillBy = 'Vendor';
 			}
 			productVendors.vendors.push( objRow );
-		}
+		});
 
-		return Promise.resolve( productVendors );
+		return productVendors;
 	}
 
 	getVersionLambda( func_name )
 	{
-		return ( p, name, version, value )=>
+		return ( product, name, version, value )=>
 		{
-			p.versions.push({attr: name, func:func_name, version: version});
+			product.versions.push({attr: name, func:func_name, version: version});
 		};
 	}
 
 	getProductFromBuyBox()
 	{
 		var box = document.querySelector('#desktop_buybox');
+		let date = new Date();
 
 		if( box )
 		{
 			var product = {};
+			product.images 	= [];
+			product.offers 	= [];
+			product.stock		= [];
+			product.versions	= [];
+
+			product.parsed	= date.toISOString();
+			product.parsedDates	= [ this.getDateString( date ) ];
+			product.search		= [];
+
 
 			product.asin 		= this.getValueSelector(box,'input[name="ASIN"]');
 
@@ -836,12 +839,13 @@ class AmazonParser
 			//product.sale 		= this.getValueSelector( box, '#price_inside_buybox' );
 
 			let shipFromSold	= this.getValueSelector( box, '#merchant-info');
-			let shipTextx		= '';
 
-			if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
-			{
-				shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
-			}
+			//let shipTextx		= '';
+
+			//if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
+			//{
+			//	shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
+			//}
 
 			let fullfilled_by = '';
 			let vendor_name		= '';
@@ -858,7 +862,8 @@ class AmazonParser
 				,merchantId		: this.getValueSelector( box, 'input[name="merchantID"]')
 				,shipping		: this.getValueSelector( box, '#price-shipping-message')
 				,vendor_name	: vendor_name
-			}
+				,fullfilled_by	: fullfilled_by
+			};
 
 			product.offers = [ offer ];
 		}
@@ -879,7 +884,7 @@ class AmazonParser
 
 		if( asin.includes('https://') )
 		{
-			asin = url.replace(/^.*\gp\/product\/(\w+).*$/,'$1');
+			asin = url.replace(/^.*\/gp\/product\/(\w+).*$/,'$1');
 		}
 
 		if( asin.includes('https://') )
@@ -907,7 +912,7 @@ class AmazonParser
 		if( /&field-keywords=\w+/.test( href ) || /\/s\/ref=sr_pg_\d+\?/.test( href ) )
 			return 'SEARCH_PAGE';
 
-		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) )
+		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) || /\/gp\/item-dispatch\/ref=/.test( href ) )
 			return 'CART_PAGE';
 
 
@@ -957,7 +962,7 @@ class AmazonParser
 			{
 				if( Array.isArray( parameters[ key ] ) )
 				{
-					parameters[key].forEach((value)=>{ search.push( value ) });
+					parameters[key].forEach((value)=>{ search.push( value ); });
 				}
 				else
 				{
@@ -966,15 +971,12 @@ class AmazonParser
 			}
 		});
 
-		console.log( 'Parameters',parameters );
-
-
 		let date	= new Date();
 		let dateStr = this.getDateString( date );
 
 		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
 		let items = Array.from( s );
-		let products = [];
+		let productsArray = [];
 
 		items.forEach(( i)=>
 		{
@@ -990,15 +992,7 @@ class AmazonParser
 
 			let url	= this.cleanPicassoRedirect( a.getAttribute('href') );
 
-			let parameters = this.getParameters( url );
-
-			let qids	= [];
-
-			if( 'qid' in parameters )
-			{
-				qids.push( parameters.qid );
-			}
-
+			//let parameters = this.getParameters( url );
 
 			let producer_name = '';
 
@@ -1048,10 +1042,8 @@ class AmazonParser
 					,description	: description
 					,date			: dateStr
 					,time			: date.toISOString()
-				}
+				};
 
-				if( qids.length )
-					offer.qid = qids[ 0 ];
 
 				if( isPrime )
 					offer.is_prime = true;
@@ -1069,9 +1061,8 @@ class AmazonParser
 				{
 					let href = i.querySelector('a.s-access-detail-page');
 
-					stock.push
-					({
-						qty		: text.replace(/.*Only (\d+) left in stock.*/,'$1' )
+					stock.push({
+						qty		: text.replace(/^Only (\d+) left in stock.*/,'$1' )
 						,url	: this.cleanPicassoRedirect( href.getAttribute('href') )
 						,date	: dateStr
 						,time	: date.toISOString()
@@ -1082,23 +1073,24 @@ class AmazonParser
 			if( offersPrice.length )
 			{
 
-				let p = {
+				let product = {
 					asin	: i.getAttribute('data-asin')
 					,url	: url
 					,title	: title.replace(/^\[Sponsored\](.*)$/,'$1')
 					,offers	: offers
 					,stock	: stock
 					,search	: search
-					,qids	: qids
+					,seller_ids	: []
+					,sellers	: []
 					,producer	: producer_name.toLowerCase()
 				};
 
-				if( p.asin )
-					products.push( p );
+				if( product.asin )
+					productsArray.push( product );
 			}
 		});
 
-		return products;
+		return productsArray;
 	}
 
 	//Test with laptop search ex Apire e5
@@ -1106,12 +1098,19 @@ class AmazonParser
 	{
 		let items = Array.from( document.querySelectorAll('#resultsCol li[data-asin]') );
 
-		let products = [];
+		let productsArray = [];
 		let date = new Date();
 
 		items.forEach((i)=>
 		{
-			let product = {};
+			let product = {
+				offers	: []
+				,stock	: []
+				,search	: []
+				,sellers: []
+				,seller_ids	: []
+			};
+
 			let a = i.querySelector('div > div:nth-child(3) > div:nth-child(1) > a[title]');
 
 			if( !a )
@@ -1122,6 +1121,7 @@ class AmazonParser
 			product.link	= a.getAttribute('href');
 			product.time	= this.getDateString( date );
 			product.parsed	= date.toISOString();
+			product.parsedDates	=[ this.getDateString( date ) ];
 
 
 			let producer_name = '';
@@ -1135,13 +1135,8 @@ class AmazonParser
 
 			let offer	= {};
 
-			let params	= this.getParameters( product.link );
-
-			if( 'qid' in params )
-			{
-				offer.qid		= params.qid;
-				product.qids	= [ qid ];
-			}
+			//XXX Do something with this
+			//let params	= this.getParameters( product.link );
 
 			if( /\bshipping\b/i.test( shipping ) )
 			{
@@ -1161,11 +1156,10 @@ class AmazonParser
 			if( offer.price )
 				product.offers.push( offer );
 
-			products.push( product );
-			console.log( product );
+			productsArray.push( product );
 		});
 
-		return products;
+		return productsArray;
 	}
 
 	mergeProducts()
@@ -1198,7 +1192,7 @@ class AmazonParser
 			{
 				if( Array.isArray( parameters[ key ] ) )
 				{
-					parameters[key].forEach((value)=>{ search.push( value.trim() ) });
+					parameters[key].forEach((value)=>{ search.push( value.trim() ); });
 				}
 				else
 				{
@@ -1213,10 +1207,11 @@ class AmazonParser
 	getProductsFromCart()
 	{
 		let form = document.querySelector('#activeCartViewForm');
+
 		let itemsNodeList = form.querySelectorAll('.sc-list-body[data-name="Active Items"]');
 		let items	= Array.from( itemsNodeList );
 
-		let products	= [];
+		let productsArray	= [];
 		let date		= new Date();
 
 		items.forEach((i)=>
@@ -1225,13 +1220,23 @@ class AmazonParser
 			if( !asinContainer )
 				return;
 
-			let product		= {};
+			let product		= {
+
+			};
 			product.asin	= asinContainer.getAttribute('data-asin');
 			product.parsed	= date.toISOString();
+			product.parsedDates	=[ this.getDateString( date ) ];
 
 			let link	= i.querySelector('a.sc-product-link');
+
+			let params  = {};
+
 			if( link )
+			{
 				product.url	= link.getAttribute('href');
+				params	= this.getParameters( product.url );
+			}
+
 
 			let seller	= i.querySelector('.sc-seller a');
 
@@ -1243,7 +1248,7 @@ class AmazonParser
 			if( qtyStr && /^Only (\d+) left in stock/.test( qtyStr ) )
 			{
 				let stock	= {
-					qty	: qtyStr.replace(/^only (\d+) left in stock.*$/,'$1')
+					qty	: qtyStr.replace(/^only (\d+) left in stock.*$/i,'$1')
 					,date	: this.getDateString( date )
 					,time	: date.toISOString()
 				};
@@ -1252,6 +1257,11 @@ class AmazonParser
 				{
 					stock.seller		= product.sellers[0];
 					stock.seller_url	= seller.getAttribute('href');
+				}
+
+				if( 'smid' in params )
+				{
+					stock.seller_id		= params.smid;
 				}
 
 				product.stock = [ stock ];
@@ -1275,10 +1285,10 @@ class AmazonParser
 
 				product.offers = [ offer ];
 			}
-			products.push( product );
+			productsArray.push( product );
 		});
 
-		return products;
+		return productsArray;
 	}
 
 	getDateString( date )
@@ -1306,7 +1316,7 @@ class AmazonParser
 			product.producer = producer.textContent.trim().replace(/^by /,'').toLowerCase();
 
 		let date		= new Date();
-		product.time	= date.toISOString();
+		product.parsed	= date.toISOString();
 		product.parsedDates	=[ this.getDateString( date ) ];
 		product.asin		= this.getAsinFromUrl( window.location.href );
 
@@ -1314,6 +1324,7 @@ class AmazonParser
 		let da	= Array.from( divs );
 
 		let offers	= [];
+
 
 		da.forEach((div)=>
 		{
@@ -1326,9 +1337,13 @@ class AmazonParser
 					,shipping	: this.getValueSelector( div,'.olpShippingInfo')
 					,condition	: this.getValueSelector(div,'.olpCondition')
 					,seller_url	: seller.getAttribute('href')
-					,time		: product.time
-					,date		: product.parsed
+					,time		: product.parsed
 				};
+
+				let prime = div.querySelector('[aria-label="Amazon Prime TM"]');
+
+				if( prime )
+					offer.is_prime = true;
 
 				product.sellers.push( seller.textContent.trim().toLowerCase() );
 
