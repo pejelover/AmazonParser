@@ -442,8 +442,8 @@ class AmazonParser
 
 		if( offer.price )
 		{
-			p.price == offer.price;
 
+			p.price		= offer.price;
 			let d		= new Date();
 			offer.date 	= this.getDateString( d );
 			offer.time	= d.toISOString();
@@ -749,7 +749,10 @@ class AmazonParser
 	{
 		return this.parseVariationUrls('#variation_size_name');
 	}
-
+	//XXX  Please standardize this function
+	//Change vendors for sellers
+	//Create products with offers instead of whaterver it returns
+	
 	parseOtherVendors()
 	{
 		var asin	= this.getAsinFromUrl( window.location.href );
@@ -936,6 +939,12 @@ class AmazonParser
 		return null;
 	}
 
+	getSearchListSelector()
+	{
+		let counter = 15;
+		return '#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
+	}
+
 	parseProductSearchList()
 	{
 		let parameters	= this.getParameters( window.location.search );
@@ -1098,6 +1107,7 @@ class AmazonParser
 		let items = Array.from( document.querySelectorAll('#resultsCol li[data-asin]') );
 
 		let products = [];
+		let date = new Date();
 
 		items.forEach((i)=>
 		{
@@ -1110,8 +1120,8 @@ class AmazonParser
 			product.title	= a.getAttribute('title');
 			product.asin	= i.getAttribute('asin');
 			product.link	= a.getAttribute('href');
-			product.time		= new Date();
-			product.parseDate	= this.getDateString( product.time );
+			product.time	= this.getDateString( date );
+			product.parsed	= date.toISOString();
 
 
 			let producer_name = '';
