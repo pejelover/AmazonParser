@@ -52,7 +52,7 @@ class AmazonParser
 
 			if( s.length > 1 )
 			{
-				let value = decodeURIComponent( s[ 1 ] ).replace(/\+/g,' ').toLowerCase();
+				let value = decodeURIComponent( s[ 1 ] ).replace(/\+/g,' ');
 
 				if( s[0] in obj )
 				{
@@ -134,6 +134,7 @@ class AmazonParser
 		product.images 	= [];
 		product.offers 	= [];
 		product.stock		= [];
+		product.sellers		= [];
 
 		product.parsed	= date.toISOString();
 		product.parsedDates	= [ this.getDateString( date ) ];
@@ -236,6 +237,26 @@ class AmazonParser
 			}
 		}
 
+		let seller = document.querySelector('#shipsFromSoldBy_feature_div a');
+		let seller_id = '';
+		let vendor_name	= ''
+
+		if( seller && /\/gp\/help\/seller\//.test( seller.getAttribute('href') ) )
+		{
+			vendor_name = seller.textContent.trim();
+			let sellerParams = this.getParameters( seller.getAttribute('href') );
+			console.log('Params', sellerParams );
+
+			if( 'seller' in sellerParams )
+			{
+				seller_id = sellerParams.seller;
+				product.seller_ids.push( seller_id );
+			}
+		}
+
+		if( vendor_name )
+			product.sellers.push( vendor_name.toLowerCase() );
+
 		var lefts	= document.querySelectorAll('span.a-size-medium.a-color-price');
 		if( lefts )
 		{
@@ -323,6 +344,26 @@ class AmazonParser
 			}
 		}
 
+		if( product.left )
+		{
+			let d = new Date();
+			let stock = {
+				date	: this.getDateString( d )
+				,time	: d.toISOString()
+			};
+
+			if( vendor_name )
+				stock.seller = vendor_name;
+
+			if( seller_id )
+				stock.seller_id = seller_id;
+
+			product.stock.push
+			({
+				qty	: product.left
+			});
+		}
+
 		var choice	= document.querySelectorAll('div.ac-badge-wrapper');
 
 		if( choice )
@@ -337,7 +378,7 @@ class AmazonParser
 				{
 					let index	= text.toLowerCase().indexOf('amazon\'s choice for');
 					product.choice	= text.substring( index );
-					version( product ,'choice', 1, product.left);
+					version( product ,'choice', 1, product.choice );
 					break;
 				}
 			}
@@ -352,6 +393,13 @@ class AmazonParser
 
 		var sale = document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
 		let offer	= {};
+		if( vendor_name )
+			offer.seller = vendor_name;
+
+		if( seller_id )
+		{
+			offer.seller_id = seller_id;
+		}
 
 		if( sale )
 		{
@@ -823,7 +871,8 @@ class AmazonParser
 			var product = {};
 			product.images 	= [];
 			product.offers 	= [];
-			product.stock		= [];
+			product.sellers	= [];
+			product.stock	= [];
 			product.versions	= [];
 
 			product.parsed	= date.toISOString();
@@ -840,25 +889,35 @@ class AmazonParser
 			let shipFromSold	= this.getValueSelector( box, '#merchant-info');
 
 			//let shipTextx		= '';
+			let vendor_name	= '';
 
-			//if( shipFromSold  && /Gift-wrap available./.test( shipFromSold ) )
+			//if( shipFromSold )
 			//{
-			//	shipTextx = shipFromSold.substring( 0, shipFromSold.toLowerCase().indexOf('gift-wrap available') ).trim();
+			//	if( /^Ships from and sold by/.test( shipFromSold ) )
+			//		vendor_name	= shipFromSold.trim().replace(/Ships from and sold by /,'' );
 			//}
 
+
+			let soldByThirdParty = this.getValueSelector( box,'#soldByThirdParty');
+
+			if( soldByThirdParty && /Sold by/.test( soldByThirdParty ) )
+			{
+				vendor_name = soldByThirdParty.replace(/.*Sold by /,'');
+			}
+
 			let fullfilled_by = '';
-			let vendor_name		= '';
 
 			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
 			{
 				fullfilled_by	= 'AMAZON';
 				vendor_name		= 'Amazon.com';
+				product.sellers.push( 'amazon.com');
 			}
 
 			let offer = {
 				rsid			: this.getValueSelector( box, 'input[name="rsid"]')
 				,price			: this.getValueSelector( box, '#price_inside_buybox' )
-				,merchantId		: this.getValueSelector( box, 'input[name="merchantID"]')
+				,seller_id		: this.getValueSelector( box, 'input[name="merchantID"]')
 				,shipping		: this.getValueSelector( box, '#price-shipping-message')
 				,vendor_name	: vendor_name
 				,fullfilled_by	: fullfilled_by
@@ -896,7 +955,18 @@ class AmazonParser
 
 	getPageType( href )
 	{
-		let cleanUrl  = this.cleanPicassoRedirect( href ).replace(/\/\//g,'/');
+		let cleanUrl  = this.cleanPicassoRedirect( href );
+		if( cleanUrl.indexOf('http') == 0 )
+		{
+			if( cleanUrl.indexOf('https') == 0  )
+				cleanUrl = 'https://'+cleanUrl.substring( 8 ).replace(/\/+/g,'/');
+			else
+				cleanUrl = 'http://'+cleanUrl.substring( 7 ).replace(/\/+/g,'/');
+		}
+		else
+		{
+				cleanUrl = cleanUrl.replace(/\/+/g,'/');
+		}
 
 		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( cleanUrl ) )
 			return 'PREVIOUS_TO_CART_PAGE';
@@ -904,6 +974,10 @@ class AmazonParser
 		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( cleanUrl ) )
 			return 'VENDORS_PAGE';
 
+
+		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
+
+		//https://www.amazon.com/Chosen-Foods-Propellant-Free-Pressure-High-Heat/dp/B01NBHW921/ref=sr_1_3_a_it?s=office-products&ie=UTF8&qid=1533084933&sr=8-3&keywords=Choosen%2BFoods&th=1
 		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
 			/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( cleanUrl ) )
 			return 'PRODUCT_PAGE';
@@ -1002,17 +1076,20 @@ class AmazonParser
 			let pn_selectors =
 			{
 				'div>div:nth-child(5)>div:nth-child(2)>span:nth-child(1)':'div>div:nth-child(5)>div:nth-child(2)>span:nth-child(2)'
-				,'div>div:nth-child(3)>div:nth-child(2)>span:nth-child(1)':'div>div:nth-child(5)>div:nth-child(2)>span:nth-child(2)'
+				,'div>div:nth-child(3)>div:nth-child(2)>span:nth-child(1)':'div > div:nth-child(3) > div:nth-child(2) > span:nth-child(2)'
 				,'div>div>div>div.a-fixed-left-grid-col.a-col-right>div.a-row.a-spacing-small>div:nth-child(2)>span:nth-child(1)':'div>div>div>div.a-fixed-left-grid-col.a-col-right>div.a-row.a-spacing-small>div:nth-child(2)>span:nth-child(2)'
 			};
+
 
 			let keys = Object.keys( pn_selectors );
 
 			for(let j=0;j<keys.length;j++ )
 			{
-				if( this.getValueSelector( i, keys[ j ] ) == 'by' )
+				let key = keys[ j ];
+
+				if( this.getValueSelector( i, key ) == 'by' )
 				{
-					producer_name = this.getValueSelector(i, pn_selectors[ keys[j] ] );
+					producer_name = this.getValueSelector(i, pn_selectors[ key ] );
 					break;
 				}
 			}
@@ -1357,3 +1434,5 @@ class AmazonParser
 		return product;
 	}
 }
+
+
