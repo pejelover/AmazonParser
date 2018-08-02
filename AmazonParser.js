@@ -896,29 +896,32 @@ class AmazonParser
 
 	getPageType( href )
 	{
-		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( href ) )
+		let cleanUrl  = this.cleanPicassoRedirect( href ).replace(/\/\//g,'/');
+
+		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( cleanUrl ) )
 			return 'PREVIOUS_TO_CART_PAGE';
 
-		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( href ) )
+		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( cleanUrl ) )
 			return 'VENDORS_PAGE';
 
-		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( href ) ||
-			/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( href ) )
+		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
+			/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( cleanUrl ) )
 			return 'PRODUCT_PAGE';
 
 		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
 		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
-		if( /&field-keywords=\w+/.test( href ) || /\/s\/ref=sr_pg_\d+\?/.test( href ) )
+		if( /&field-keywords=\w+/.test( cleanUrl ) || /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
 			return 'SEARCH_PAGE';
 
-		if( /amazon\..*\/gp\/cart\/view.html/.test( href ) || /\/gp\/item-dispatch\/ref=/.test( href ) )
+		if( /amazon\..*\/gp\/cart\/view.html/.test( cleanUrl ) || /\/gp\/item-dispatch\/ref=/.test( cleanUrl ) )
 			return 'CART_PAGE';
 
-
-		if( /marketplaceID=(\w+)&/.test( href ) )
+		if( /marketplaceID=(\w+)&/.test( cleanUrl ) )
 		{
 			return 'SEARCH_PAGE';
 		}
+
+		return "NO_DETECTED";
 	}
 
 	getValueSelector(node,selector)
