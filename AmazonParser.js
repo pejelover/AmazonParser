@@ -135,6 +135,7 @@ class AmazonParser
 		product.offers 	= [];
 		product.stock		= [];
 		product.sellers		= [];
+		product.seller_ids	= [];
 
 		product.parsed	= date.toISOString();
 		product.parsedDates	= [ this.getDateString( date ) ];
@@ -350,6 +351,7 @@ class AmazonParser
 			let stock = {
 				date	: this.getDateString( d )
 				,time	: d.toISOString()
+				,qty	: product.left
 			};
 
 			if( vendor_name )
@@ -358,10 +360,7 @@ class AmazonParser
 			if( seller_id )
 				stock.seller_id = seller_id;
 
-			product.stock.push
-			({
-				qty	: product.left
-			});
+			product.stock.push( stock );
 		}
 
 		var choice	= document.querySelectorAll('div.ac-badge-wrapper');
@@ -441,13 +440,23 @@ class AmazonParser
 
 		//Shipping
 		//
-		let shipping = document.querySelector('#priceblock_ourprice_row #ourprice_shippingmessage b');
+
+		let shipping = document.querySelector('#ourprice_shippingmessage>span>b');
 
 		if( shipping )
 		{
 			version( product ,'shipping', 3, offer.shipping );
 			offer.shipping =  shipping.textContent;
 		}
+
+		let prime = document.querySelector('#priceblock_ourprice_row i.a-icon.a-icon-prime');
+
+		if( prime )
+		{
+			offer.is_prime = true;
+		}
+
+
 
 		if( typeof offer.shipping === 'undefined' )
 		{
@@ -1382,6 +1391,9 @@ class AmazonParser
 	{
 		let product = {
 			sellers : []
+			,seller_ids: []
+			,stock	: []
+			,offers	: []
 		};
 
 		let name = document.querySelector('#olpProductDetails h1');
@@ -1410,6 +1422,8 @@ class AmazonParser
 			let seller = div.querySelector('.olpSellerName span>a');
 			if( seller )
 			{
+
+
 				let offer = {
 					price	:this.getValueSelector(div,'span.olpOfferPrice.a-text-bold')
 					,seller	: seller.textContent
@@ -1419,12 +1433,23 @@ class AmazonParser
 					,time		: product.parsed
 				};
 
+				let params = this.getParameters( seller.getAttribute('href') );
+
+				if( 'seller' in params )
+				{
+					product.seller_ids.push( params.seller );
+					offer.seller_id = params.seller;
+				}
+
+
 				let prime = div.querySelector('[aria-label="Amazon Prime TM"]');
 
 				if( prime )
 					offer.is_prime = true;
 
+
 				product.sellers.push( seller.textContent.trim().toLowerCase() );
+
 
 				offers.push( offer );
 			}
