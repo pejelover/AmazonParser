@@ -1458,6 +1458,27 @@ class AmazonParser
 		product.offers = offers;
 		return product;
 	}
-}
 
+	getAllProductOffers()
+	{
+
+	}
+
+	followPageProductOffers()
+	{
+ 		var asin =  parser.getAsinFromUrl( window.location.href );
+        var a = document.querySelectorAll('a');
+
+        for(var i=0;i<a.length;i++)
+        {
+            var href = a[ i ].getAttribute('href');
+            if( href && href.includes('/gp/offer-listing/'+asin) )
+            {
+                //console.log('Clicked');
+                a[ i ].click();
+				return;
+            }
+        }
+	}
+}
 
