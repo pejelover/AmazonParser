@@ -1,8 +1,8 @@
 class AmazonParser
 {
-	constructor()
+	constructor(options)
 	{
-
+		this.productUtils	= new ProductUtils( options );
 	}
 	/*
 		Parses the vendor section of
@@ -23,7 +23,6 @@ class AmazonParser
 
 	/*
 	*/
-
 
 	getParameters( url )
 	{
@@ -77,8 +76,7 @@ class AmazonParser
 
 		for(var i=0;i<productsArray.length;i++)
 		{
-			var product = {};
-			product.versions = [];
+			let product = this.productUtils.createNewProductObject();
 
 			version(product,'extracted',1,window.location.href);
 
@@ -125,21 +123,8 @@ class AmazonParser
 
 	getProductFromProductPage()
 	{
-
-		let date	= new Date();
-
 		// jshint shadow: true
-		let product 		= {};
-		product.versions	= [];
-		product.images 	= [];
-		product.offers 	= [];
-		product.stock		= [];
-		product.sellers		= [];
-		product.seller_ids	= [];
-
-		product.parsed	= date.toISOString();
-		product.parsedDates	= [ this.getDateString( date ) ];
-		product.search		= [];
+		let product 		= PromiseUtils.createNewProductObject();
 
 		this.getSearchTerms( window.location.search ).forEach((term)=>
 		{
@@ -349,8 +334,8 @@ class AmazonParser
 		{
 			let d = new Date();
 			let stock = {
-				date	: this.getDateString( d )
-				,time	: d.toISOString()
+				date	: this.productUtils.getDate()
+				,time	: this.productUtils.getTime()
 				,qty	: product.left
 			};
 
@@ -872,40 +857,18 @@ class AmazonParser
 
 	getProductFromBuyBox()
 	{
+		let product = null;
 		var box = document.querySelector('#desktop_buybox');
-		let date = new Date();
 
 		if( box )
 		{
-			var product = {};
-			product.images 	= [];
-			product.offers 	= [];
-			product.sellers	= [];
-			product.stock	= [];
-			product.versions	= [];
-
-			product.parsed	= date.toISOString();
-			product.parsedDates	= [ this.getDateString( date ) ];
-			product.search		= [];
-
-
-			product.asin 		= this.getValueSelector(box,'input[name="ASIN"]');
-
-			//product.merchant_id	= inputLmbda(box,"merchantID");
-			//product.selling_customer_id	= inputLmbda(box,"sellingCustomerID");
-			//product.sale 		= this.getValueSelector( box, '#price_inside_buybox' );
+			product = this.productUtils.createNewProductObject();
+			product.asin = this.getValueSelector(box,'input[name="ASIN"]');
 
 			let shipFromSold	= this.getValueSelector( box, '#merchant-info');
 
 			//let shipTextx		= '';
 			let vendor_name	= '';
-
-			//if( shipFromSold )
-			//{
-			//	if( /^Ships from and sold by/.test( shipFromSold ) )
-			//		vendor_name	= shipFromSold.trim().replace(/Ships from and sold by /,'' );
-			//}
-
 
 			let soldByThirdParty = this.getValueSelector( box,'#soldByThirdParty');
 
@@ -1056,9 +1019,6 @@ class AmazonParser
 			}
 		});
 
-		let date	= new Date();
-		let dateStr = this.getDateString( date );
-
 		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
 		let items = Array.from( s );
 		let productsArray = [];
@@ -1128,8 +1088,8 @@ class AmazonParser
 					price			: offerElement.textContent.trim()
 					,url			: this.cleanPicassoRedirect( offerElement.parentElement.getAttribute('href') )
 					,description	: description
-					,date			: dateStr
-					,time			: date.toISOString()
+					,date			: this.productUtils.getDate()
+					,time			: this.productUtils.getTime()
 				};
 
 
@@ -1152,8 +1112,8 @@ class AmazonParser
 					stock.push({
 						qty		: text.replace(/^Only (\d+) left in stock.*/,'$1' )
 						,url	: this.cleanPicassoRedirect( href.getAttribute('href') )
-						,date	: dateStr
-						,time	: date.toISOString()
+						,date	: this.productUtils.getDate()
+						,time	: this.productUtils.getTime()
 					});
 				}
 			}
@@ -1187,17 +1147,10 @@ class AmazonParser
 		let items = Array.from( document.querySelectorAll('#resultsCol li[data-asin]') );
 
 		let productsArray = [];
-		let date = new Date();
 
 		items.forEach((i)=>
 		{
-			let product = {
-				offers	: []
-				,stock	: []
-				,search	: []
-				,sellers: []
-				,seller_ids	: []
-			};
+			let product	= this.productUtils.createNewProductObject();
 
 			let a = i.querySelector('div > div:nth-child(3) > div:nth-child(1) > a[title]');
 
@@ -1207,10 +1160,6 @@ class AmazonParser
 			product.title	= a.getAttribute('title');
 			product.asin	= i.getAttribute('asin');
 			product.link	= a.getAttribute('href');
-			product.time	= this.getDateString( date );
-			product.parsed	= date.toISOString();
-			product.parsedDates	=[ this.getDateString( date ) ];
-
 
 			let producer_name = '';
 
@@ -1292,53 +1241,86 @@ class AmazonParser
 		return search;
 	}
 
-	getProductsFromCart()
+	parseProductItemFromCart( i )
 	{
-		let form = document.querySelector('#activeCartViewForm');
+		let product		= this.productUtils.createNewProductObject();
+		product.asin	= i.getAttribute('data-asin');
 
-		let itemsNodeList = form.querySelectorAll('.sc-list-body[data-name="Active Items"]');
-		let items	= Array.from( itemsNodeList );
+		let link	= i.querySelector('a.sc-product-link');
 
-		let productsArray	= [];
-		let date		= new Date();
+		let seller	= i.querySelector('.sc-seller a');
 
-		items.forEach((i)=>
+		if( seller )
+			product.sellers.push( seller.textContent.trim().toLowerCase() );
+
+		let params  = {};
+
+		if( link )
 		{
-			let asinContainer	= i.querySelector('div[data-asin]');
-			if( !asinContainer )
-				return;
+			product.url	= link.getAttribute('href');
+			params	= this.getParameters( product.url );
+		}
 
-			let product		= {
+		var warningMessage  = i.querySelector('.sc-quantity-update-message>.a-box.a-alert');
 
+        if( warningMessage )
+        {
+			let text	= warningMessage.textContent.trim().replace(/\s+/g,' ');
+			text 		= text.replace(/^only (\d+) left in stock.*$/i,'$1');
+			text		= text.replace(/^This seller has only (\d+) of these available. *$/,'$1');
+
+			let stock	= {
+				qty		: text
+				,date	: this.productUtils.getDate()
+				,time	: this.productUtils.getTime()
 			};
-			product.asin	= asinContainer.getAttribute('data-asin');
-			product.parsed	= date.toISOString();
-			product.parsedDates	=[ this.getDateString( date ) ];
 
-			let link	= i.querySelector('a.sc-product-link');
-
-			let params  = {};
-
-			if( link )
+			if( 'smid' in params )
 			{
-				product.url	= link.getAttribute('href');
-				params	= this.getParameters( product.url );
+				stock.seller_id =  params.smid;
 			}
 
+			if( 'seller' in product )
+			{
+				stock.seller		= product.sellers[0];
+				stock.seller_url	= seller.getAttribute('href');
+			}
 
-			let seller	= i.querySelector('.sc-seller a');
+			product.stock = [ stock ];
+        }
 
-			if( seller )
-				product.sellers = [ seller.textContent.trim().toLowerCase() ];
+		let qtyStr 	= this.getValueSelector(i,'.sc-product-scarcity');
 
-			let qtyStr 	= this.getValueSelector(i,'.sc-product-scarcity');
+		if( qtyStr && /^Only (\d+) left in stock/.test( qtyStr ) )
+		{
+			let stock	= {
+				qty	: qtyStr.replace(/^only (\d+) left in stock.*$/i,'$1')
+				,date	: this.productUtils.getDate()
+				,time	: this.productUtils.getTime()
+			};
 
-			if( qtyStr && /^Only (\d+) left in stock/.test( qtyStr ) )
+			if( 'seller' in product )
+			{
+				stock.seller		= product.sellers[0];
+				stock.seller_url	= seller.getAttribute('href');
+			}
+
+			if( 'smid' in params )
+			{
+				stock.seller_id		= params.smid;
+			}
+
+			product.stock = [ stock ];
+		}
+
+		if( product.stock.length == 0 )
+		{
+			if( i.getAttribute('data-quantity') === '999' )
 			{
 				let stock	= {
-					qty	: qtyStr.replace(/^only (\d+) left in stock.*$/i,'$1')
-					,date	: this.getDateString( date )
-					,time	: date.toISOString()
+					qty	: 999
+					,date	: this.productUtils.getDate()
+					,time	: this.productUtils.getTime()
 				};
 
 				if( 'seller' in product )
@@ -1354,47 +1336,140 @@ class AmazonParser
 
 				product.stock = [ stock ];
 			}
+		}
 
-			let price = this.getValueSelector(i,'span.sc-product-price');
+		let price = this.getValueSelector(i,'span.sc-product-price');
 
-			if( price )
+		if( price )
+		{
+			let offer = {
+				price	: price
+				,date	: this.productUtils.getDate()
+				,time	: this.productUtils.getTime()
+			};
+
+			if( 'seller' in product )
 			{
-				let offer = {
-					price	: price
-					,date	: this.getDateString( date )
-					,time	: date.toISOString()
-				};
+				offer.seller		= product.seller;
+				offer.seller_url	= seller.getAttribute('href');
+			}
 
-				if( 'seller' in product )
+			if( 'smid' in params )
+			{
+				offer.seller_id = params.smid;
+			}
+
+			product.offers = [ offer ];
+		}
+
+		return product;
+	}
+
+	/*
+	 * requires a client from extension-framework/
+	 */
+	parseAllTheStockFromCart( client )
+	{
+		let form = document.querySelector('#activeCartViewForm');
+
+		let itemsNodeList = form.querySelectorAll('.sc-list-body[data-name="Active Items"] div[data-asin]');
+		let items	= Array.from( itemsNodeList );
+
+		let generator = ( items, (i, index)=>
+		{
+			let z = i.querySelector('select[name="quantity"].a-native-dropdown');
+
+			if( z )
+				z.click();
+
+			let product = this.parseProductItemFromCart( i );
+
+			if( product.stock.length )
+			{
+				//Send Product to database
+				let x = i.querySelector('.sc-action-delete input');
+				x.click();
+
+				return Promise.resolve( product );
+			}
+
+			return client.waitTillElementReady( i ,'span.a-dropdown-prompt').then(()=>
+			{
+				let z = i.querySelector('span.a-dropdown-prompt');
+				z.click();
+				return client.waitTillElementReady(i,'input[name="quantityBox"][aria-label="Quantity"]',false );
+
+			}).then(()=>
+			{
+				var input = i.querySelector('input[name="quantityBox"][aria-label="Quantity"]');
+                if( input )
+                {
+                    input.value = 999;
+                    var inputEvent = new Event('input',
+                    {
+                        "bubbles"       : true
+                        ,"cancelable"   : false
+                        ,"composed"     : false
+                    });
+
+                    input.dispatchEvent( inputEvent );
+                }
+				return client.waitTillElementReady(i,'a[data-action="update"]',false);
+			})
+			.then(()=>
+			{
+				let a =  i.querySelector('a[data-action="update"]');
+				if( a  )
 				{
-					offer.seller		= product.seller;
-					offer.seller_url	= seller.getAttribute('href');
+					a.click();
+					return PromiseUtils.resolveAfter( 1300, 1 );
+				}
+				else
+				{
+					i.setAttribute('style','background-color:red');
+					return PromiseUtils.resolveAfter( 60000, 1 );
 				}
 
-				product.offers = [ offer ];
-			}
-			productsArray.push( product );
+			})
+			.then(()=>
+			{
+				product = this.parseProductItemFromCart( i );
+
+				if( product.stock.length )
+				{
+					//Sen
+					let x = i.querySelector('.sc-action-delete input');
+					x.click();
+
+					return Promise.resolve( product );
+				}
+				else
+				{
+					i.setAttribute('style','background-color:red');
+					return Promise.resolve( null );
+				}
+			});
 		});
+
+		return PromiseUtils.runSequential( items, generator );
+	}
+
+	getProductsFromCart()
+	{
+		let form = document.querySelector('#activeCartViewForm');
+
+		let itemsNodeList = form.querySelectorAll('.sc-list-body[data-name="Active Items"] div[data-asin]');
+		let items	= Array.from( itemsNodeList );
+		let productsArray	= [];
+
+		items.forEach((i)=> productsArray.push( this.parseProductItemFromCart( i ) ) );
 
 		return productsArray;
 	}
 
-	getDateString( date )
-	{
-		let fl = (i)=> i<10 ? '0'+i : i;
-		let dateStr = date.getFullYear()+'-'+fl( date.getMonth()+1 )+'-'+fl( date.getDate() );
-
-		return dateStr;
-	}
-
 	getProductFromSellersPage()
 	{
-		let product = {
-			sellers : []
-			,seller_ids: []
-			,stock	: []
-			,offers	: []
-		};
+		let product	= this.productUtils.createNewProductObject();
 
 		let name = document.querySelector('#olpProductDetails h1');
 
@@ -1406,31 +1481,23 @@ class AmazonParser
 		if( producer && /^by /.test( producer.textContent.trim() ) )
 			product.producer = producer.textContent.trim().replace(/^by /,'').toLowerCase();
 
-		let date		= new Date();
-		product.parsed	= date.toISOString();
-		product.parsedDates	=[ this.getDateString( date ) ];
 		product.asin		= this.getAsinFromUrl( window.location.href );
 
 		let divs = document.querySelectorAll('#olpOfferList div[role="row"].olpOffer');
 		let da	= Array.from( divs );
-
-		let offers	= [];
-
 
 		da.forEach((div)=>
 		{
 			let seller = div.querySelector('.olpSellerName span>a');
 			if( seller )
 			{
-
-
 				let offer = {
 					price	:this.getValueSelector(div,'span.olpOfferPrice.a-text-bold')
 					,seller	: seller.textContent
 					,shipping	: this.getValueSelector( div,'.olpShippingInfo')
 					,condition	: this.getValueSelector(div,'.olpCondition')
 					,seller_url	: seller.getAttribute('href')
-					,time		: product.parsed
+					,time		: this.productUtils.getTime()
 				};
 
 				let params = this.getParameters( seller.getAttribute('href') );
@@ -1450,12 +1517,11 @@ class AmazonParser
 
 				product.sellers.push( seller.textContent.trim().toLowerCase() );
 
+				product.offers.push( offer );
 
-				offers.push( offer );
 			}
 		});
 
-		product.offers = offers;
 		return product;
 	}
 
@@ -1481,4 +1547,18 @@ class AmazonParser
         }
 	}
 }
+
+
+try{
+	if( typeof module !== "undefined" && module.exports )
+	{
+		module.exports = AmazonParser;
+	}
+}
+catch(e){
+
+
+}
+
+
 
