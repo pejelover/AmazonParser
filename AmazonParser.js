@@ -1025,22 +1025,28 @@ class AmazonParser
 
 		items.forEach(( i)=>
 		{
+			let product = this.productUtils.createNewProductObject();
+
 			let a	  = i.querySelector('a.s-access-detail-page');
 
 			if( a == null )
 				return;
+
+			product.asin = i.getAttribute('data-asin');
 
 			let title = a.getAttribute('title');
 
 			if( !title )
 				return;
 
+			product.title = title.replace(/^\[Sponsored\](.*)$/,'$1');
+
 			let url	= this.cleanPicassoRedirect( a.getAttribute('href') );
+			product.url = url;
 
 			//let parameters = this.getParameters( url );
 
 			let producer_name = '';
-
 
 			let pn_selectors =
 			{
@@ -1048,7 +1054,6 @@ class AmazonParser
 				,'div>div:nth-child(3)>div:nth-child(2)>span:nth-child(1)':'div > div:nth-child(3) > div:nth-child(2) > span:nth-child(2)'
 				,'div>div>div>div.a-fixed-left-grid-col.a-col-right>div.a-row.a-spacing-small>div:nth-child(2)>span:nth-child(1)':'div>div>div>div.a-fixed-left-grid-col.a-col-right>div.a-row.a-spacing-small>div:nth-child(2)>span:nth-child(2)'
 			};
-
 
 			let keys = Object.keys( pn_selectors );
 
@@ -1066,11 +1071,9 @@ class AmazonParser
 			////let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-small > .a-row.a-spacing-none:last-of-type');
 			//let producer_name =  this.getValueSelector(i,'.a-row.a-spacing-mini > .a-row.a-spacing-none:last-of-type');
 
-			if( !producer_name )
-				producer_name = '';
+			product.producer = producer_name ? producer_name.trim() : '';
 
 			let  offersPrice = Array.from( i.querySelectorAll('a>span.a-offscreen'));
-
 
 			let offers = [];
 
@@ -1096,45 +1099,28 @@ class AmazonParser
 				if( isPrime )
 					offer.is_prime = true;
 
+				product.offers.push( offer );
+
 				offers.push( offer );
 			});
 
-			let stock = [];
+			let text = i.textContent.replace(/\s+/gm,' ');
 
-			if( offers.length == 1 )
+			if( /only \d+ left in stock/i.test( text ) )
 			{
-				let text = i.textContent.replace(/\s+/gm,' ');
+				let href = i.querySelector('a.s-access-detail-page');
 
-				if( /only \d+ left in stock/i.test( text ) )
-				{
-					let href = i.querySelector('a.s-access-detail-page');
-
-					stock.push({
-						qty		: text.replace(/^Only (\d+) left in stock.*/,'$1' )
-						,url	: this.cleanPicassoRedirect( href.getAttribute('href') )
-						,date	: this.productUtils.getDate()
-						,time	: this.productUtils.getTime()
-					});
-				}
+				product.stock.push({
+					qty		: text.replace(/^Only (\d+) left in stock.*/,'$1' )
+					,url	: this.cleanPicassoRedirect( href.getAttribute('href') )
+					,date	: this.productUtils.getDate()
+					,time	: this.productUtils.getTime()
+				});
 			}
 
-			if( offersPrice.length )
+			if( product.offers.length && product.asin )
 			{
-
-				let product = {
-					asin	: i.getAttribute('data-asin')
-					,url	: url
-					,title	: title.replace(/^\[Sponsored\](.*)$/,'$1')
-					,offers	: offers
-					,stock	: stock
-					,search	: search
-					,seller_ids	: []
-					,sellers	: []
-					,producer	: producer_name.toLowerCase()
-				};
-
-				if( product.asin )
-					productsArray.push( product );
+				productsArray.push( product );
 			}
 		});
 
