@@ -124,7 +124,7 @@ class AmazonParser
 	getProductFromProductPage()
 	{
 		// jshint shadow: true
-		let product 		= PromiseUtils.createNewProductObject();
+		let product 		= this.productUtils.createNewProductObject();
 
 		this.getSearchTerms( window.location.search ).forEach((term)=>
 		{
@@ -225,7 +225,7 @@ class AmazonParser
 
 		let seller = document.querySelector('#shipsFromSoldBy_feature_div a');
 		let seller_id = '';
-		let vendor_name	= ''
+		let vendor_name	= '';
 
 		if( seller && /\/gp\/help\/seller\//.test( seller.getAttribute('href') ) )
 		{
@@ -270,6 +270,7 @@ class AmazonParser
 
 		if( typeof product.left  === 'undefined' || product.left === '' )
 		{
+
 			let availability = document.querySelectorAll('[data-feature-name="availability"]');
 
 			for( let i = 0; i<availability.length;i++)
@@ -291,7 +292,7 @@ class AmazonParser
 
 				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
 				{
-					product.left = plefts[ i ].textContent.trim();
+					product.left = text.textContent.trim();
 					version( product ,'left', 5, product.left);
 					break;
 				}
@@ -311,7 +312,7 @@ class AmazonParser
 
 					if( /only \d+ left in stock/i.test( text ) )
 					{
-						product.left = plefts[ i ].textContent.trim();
+						product.left = text.textContent.trim();
 						version( product ,'left', 6, product.left);
 					}
 
@@ -323,7 +324,7 @@ class AmazonParser
 
 					if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
 					{
-						product.left = plefts[ i ].textContent.trim();
+						product.left = text.textContent.trim();
 						version( product ,'left', 8, product.left);
 					}
 				}
@@ -607,7 +608,7 @@ class AmazonParser
 		{
 			///^-?\d*(\.\d+)?$/
 			product.rating = prating.getAttribute('title').trim().replace(/(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
-			//         prating.getAttribute('title').trim().replace(/.*(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
+			//		 prating.getAttribute('title').trim().replace(/.*(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
 			version(product,'rating',1, product.rating );
 		}
 
@@ -640,8 +641,7 @@ class AmazonParser
 		//Cleaning ratings
 		if( typeof product.number_of_ratings !== 'undefined' )
 		{
-			if( product.number_of_ratings === 'Be the first to review this product'
-					|| product.number_of_ratings.includes('Be the first to review this item') )
+			if( product.number_of_ratings === 'Be the first to review this product' || product.number_of_ratings.includes('Be the first to review this item') )
 				product.number_of_ratings = '0';
 		}
 
@@ -826,7 +826,7 @@ class AmazonParser
 			if( price )
 				objRow.price	= row.querySelector('.olpOfferPrice').textContent.trim();
 
-			var shipping        = row.querySelector('.olpShippingInfo');
+			var shipping		= row.querySelector('.olpShippingInfo');
 			objRow.shipping		= shipping ? shipping.textContent : '';
 			objRow.isPrime		= row.querySelector('.a-icon-prime') !== null;
 			objRow.condition	= row.querySelector('.olpCondition').textContent;
@@ -1249,8 +1249,8 @@ class AmazonParser
 
 		var warningMessage  = i.querySelector('.sc-quantity-update-message>.a-box.a-alert');
 
-        if( warningMessage )
-        {
+		if( warningMessage )
+		{
 			let text	= warningMessage.textContent.trim().replace(/\s+/g,' ');
 			text 		= text.replace(/^only (\d+) left in stock.*$/i,'$1');
 			text		= text.replace(/^This seller has only (\d+) of these available. *$/,'$1');
@@ -1273,7 +1273,7 @@ class AmazonParser
 			}
 
 			product.stock = [ stock ];
-        }
+		}
 
 		let qtyStr 	= this.getValueSelector(i,'.sc-product-scarcity');
 
@@ -1388,18 +1388,18 @@ class AmazonParser
 			}).then(()=>
 			{
 				var input = i.querySelector('input[name="quantityBox"][aria-label="Quantity"]');
-                if( input )
-                {
-                    input.value = 999;
-                    var inputEvent = new Event('input',
-                    {
-                        "bubbles"       : true
-                        ,"cancelable"   : false
-                        ,"composed"     : false
-                    });
+				if( input )
+				{
+					input.value = 999;
+					var inputEvent = new Event('input',
+					{
+						"bubbles"	   : true
+						,"cancelable"   : false
+						,"composed"	 : false
+					});
 
-                    input.dispatchEvent( inputEvent );
-                }
+					input.dispatchEvent( inputEvent );
+				}
 				return client.waitTillElementReady(i,'a[data-action="update"]',false);
 			})
 			.then(()=>
@@ -1518,19 +1518,19 @@ class AmazonParser
 
 	followPageProductOffers()
 	{
- 		var asin =  parser.getAsinFromUrl( window.location.href );
-        var a = document.querySelectorAll('a');
+		var asin =  parser.getAsinFromUrl( window.location.href );
+		var a = document.querySelectorAll('a');
 
-        for(var i=0;i<a.length;i++)
-        {
-            var href = a[ i ].getAttribute('href');
-            if( href && href.includes('/gp/offer-listing/'+asin) )
-            {
-                //console.log('Clicked');
-                a[ i ].click();
+		for(var i=0;i<a.length;i++)
+		{
+			var href = a[ i ].getAttribute('href');
+			if( href && href.includes('/gp/offer-listing/'+asin) )
+			{
+				//console.log('Clicked');
+				a[ i ].click();
 				return;
-            }
-        }
+			}
+		}
 	}
 }
 
