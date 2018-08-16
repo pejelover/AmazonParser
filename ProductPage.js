@@ -608,7 +608,7 @@ class ProductPage
 			{
 				try
 				{
-					this.log( vendors[i].getAttribute('data-a-popover') );
+					//this.log( vendors[i].getAttribute('data-a-popover') );
 
 					var obj = JSON.parse( vendors[i].getAttribute('data-a-popover') );
 
@@ -619,7 +619,7 @@ class ProductPage
 				}
 				catch(e)
 				{
-					this.log('IGNORE:',e );
+					//this.log('IGNORE:',e );
 				}
 			}
 

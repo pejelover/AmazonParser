@@ -57,7 +57,7 @@ class CartPage
 			params	= this.amazonParser.getParameters( product.url );
 		}
 
-		var warningMessage  = i.querySelector('.sc-quantity-update-message>.a-box.a-alert');
+		let warningMessage  = i.querySelector('.sc-quantity-update-message>.a-box.a-alert');
 
 		if( warningMessage )
 		{
@@ -221,15 +221,19 @@ class CartPage
 			.then(()=>
 			{
 				//CLick on the dropdown
-				var x = div.querySelector('span.a-dropdown-prompt');
+				let x = div.querySelector('span.a-dropdown-prompt');
                 x.click();
 
 				return client.waitTillReady( 'div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
 			})
 			.then(()=>
 			{
+				return PromiseUtils.resolveAfter( 1, 1000 );
+			})
+			.then(()=>
+			{
 				//Wait select  button with label 10+
-				let x = div.querySelector('div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
+				let x = document.querySelector('div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
 				if( x )
 					x.click();
 
@@ -245,7 +249,7 @@ class CartPage
 				if( input )
 				{
 					input.value = 999;
-					var inputEvent = new Event('input',
+					let inputEvent = new Event('input',
 					{
 						"bubbles"	   : true
 						,"cancelable"   : false
@@ -262,41 +266,49 @@ class CartPage
 				//Click on the update button
 				let a =  div.querySelector('a[data-action="update"]');
 
-				if( a  )
+				if( a == null  )
 				{
-					a.click();
-
-					return PromiseUtils.tryNTimes(()=>
-					{
-						let it = this.parseProductItem( div );
-						//console.log( it );
-						//console.log( i );
-						//let e = i.querySelector('.sc-quantity-update-message.a-spacing-top-mini');
-						//console.log( e );
-						//return e !== null;
-						return it.stock.length > 0;
-
-					},250,14).catch(()=>
-					{
-						return Promise.reject('It fails to get the message');
-					});
+					return Promise.reject('A button to update not found');
 				}
+
+				a.click();
+
+				return PromiseUtils.tryNTimes(()=>
+				{
+					let asin = div.getAttribute('data-asin');
+					let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
+					let it = this.parseProductItem( nDiv );
+					//console.log( it );
+					//console.log( i );
+					//let e = i.querySelector('.sc-quantity-update-message.a-spacing-top-mini');
+					//console.log( e );
+					//return e !== null;
+					return it.stock.length > 0 ? it : false;
+
+				},250,14).catch((eee)=>
+				{
+					return Promise.reject('It fails to get the message',eee);
+				});
 			})
-			.then(()=>
+			.then(( product1 )=>
 			{
-				product = this.parseProductItem( div );
+				console.log( product1 );
+
+				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+product1.asin +'"]');
+				product = this.parseProductItem( nDiv );
+				console.log( product );
 
 				if( product.stock.length )
 				{
 					//Sen
-					let x = div.querySelector('span.sc-action-delete>span');
+					let x = nDiv.querySelector('span.sc-action-delete>span');
 					x.click();
 
-					return Promise.resolve( product );
+					return PromiseUtils.resolveAfter( product, 300 );
 				}
 				else
 				{
-					div.setAttribute('style','background-color:red');
+					nDiv.setAttribute('style','background-color:red');
 					return Promise.resolve( null );
 				}
 			})
