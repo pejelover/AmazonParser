@@ -46,7 +46,7 @@ class ProductUtils
 
 	mergeProducts( op, np )
 	{
-		isOpOldProduct = true;
+		let isOpOldProduct = true;
 
 		if('parsed' in op && 'parsed' in np && op.parsed > np.parsed )
 		{
@@ -137,6 +137,11 @@ class ProductUtils
 
 			product.offers.forEach((offer )=>
 			{
+				if( 'add2CarSelector' in offer )
+				{
+					delete offer.add2CarSelector;
+				}
+
 				if( 'seller' in offer )
 				{
 					product.sellers.push( offer.seller.toLowerCase() );
