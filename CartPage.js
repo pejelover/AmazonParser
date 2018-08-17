@@ -21,7 +21,7 @@ class CartPage
 		let generator = (product, index)=>
 		{
 			let selector = 'div[data-asin="'+product.asin+'"]  span.sc-action-delete>span';
-			console.log( selector );
+			//console.log( selector );
 			let input  = document.querySelector( selector );
 
 			if( input )
@@ -37,7 +37,7 @@ class CartPage
 
 	parseProductItem( i )
 	{
-		console.log( i );
+		//console.log( i );
 
 		let product		= this.productUtils.createNewProductObject();
 		product.asin	= i.getAttribute('data-asin');
@@ -292,11 +292,14 @@ class CartPage
 			})
 			.then(( product1 )=>
 			{
-				console.log( product1 );
+				//console.log( product1 );
+
+				if( product1 )
+					client.executeOnBackground('ProductsFound', [product1] );
 
 				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+product1.asin +'"]');
 				product = this.parseProductItem( nDiv );
-				console.log( product );
+				//console.log( product );
 
 				if( product.stock.length )
 				{

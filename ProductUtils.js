@@ -92,11 +92,33 @@ class ProductUtils
 		if( !newProduct.stock )
 			newProduct.stock = [];
 
-		this.overlapingInfo( oldProduct.stock, newProduct.stock, 'date', (element,isOverlap)=>
-		{
-			if( !isOverlap )
-				newProduct.stock.push( element );
-		});
+		this.overlapingInfo
+		(
+			oldProduct.stock
+			,newProduct.stock
+			,(stock)=>
+			{
+				let k = "";
+
+				if( qty in stock )
+					k = qty;
+
+				if( "seller_id" in stock )
+					k+="_"+seller_id;
+
+				if( 'time' in stock )
+				{
+					k+="_"+stock.time.substring(0,13);
+				}
+
+				return k;
+			}
+			, (element,isOverlap)=>
+			{
+				if( !isOverlap )
+					newProduct.stock.push( element );
+			}
+		);
 
 		if( !newProduct.offers )
 			newProduct.offers = [];
@@ -217,6 +239,7 @@ class ProductUtils
 			return;
 
 		let aKeys	= {};
+
 		let isFunc  = typeof key === "function";
 
 		if( key == null )

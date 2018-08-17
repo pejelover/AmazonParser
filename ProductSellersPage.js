@@ -6,6 +6,17 @@ class ProductSellersPage
 		this.productUtils = productUtils;
 	}
 
+	addToCartFirstSeller()
+	{
+		try{
+			let divs = document.querySelector('#olpOfferList div[role="row"].olpOffer input[value="Add to cart"]').click();
+		}
+		catch(e)
+		{
+			console.error('SellersPage: Selector to add cart Fails');
+		}
+	}
+
 	getSellersAddToCartButtons()
 	{
 		let divs = document.querySelectorAll('#olpOfferList div[role="row"].olpOffer');

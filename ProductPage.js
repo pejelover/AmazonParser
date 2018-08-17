@@ -28,6 +28,18 @@ class ProductPage
 		return p;
 	}
 
+	addToCart()
+	{
+		try
+		{
+			document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]').click();
+		}
+		catch(e)
+		{
+			console.log("AddToCartFails PP::atc38");
+		}
+	}
+
 	getProductFromProductPage()
 	{
 		// jshint shadow: true
