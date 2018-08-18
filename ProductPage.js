@@ -10,6 +10,7 @@ class ProductPage
 	{
 		let p1 = this.getProductFromProductPage();
 		let p2 = this.getProductFromBuyBox();
+
 		let p = null;
 
 		if( p1 && p2 )
@@ -30,14 +31,24 @@ class ProductPage
 
 	addToCart()
 	{
-		try
+		//Test With https://www.amazon.com/dp/B077GDG44V
+		let fun = ()=>
 		{
-			document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]').click();
-		}
-		catch(e)
+			let button = document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]');
+			if( button )
+			{
+				button.click();
+				return true;
+			}
+
+			return false;
+		};
+
+		PromiseUtils.tryNTimes(fun,200,20)
+		.catch((e)=>
 		{
 			console.log("AddToCartFails PP::atc38");
-		}
+		});
 	}
 
 	getProductFromProductPage()
@@ -144,11 +155,11 @@ class ProductPage
 
 		let seller = document.querySelector('#shipsFromSoldBy_feature_div a');
 		let seller_id = '';
-		let vendor_name	= '';
+		let seller_name	= '';
 
 		if( seller && /\/gp\/help\/seller\//.test( seller.getAttribute('href') ) )
 		{
-			vendor_name = seller.textContent.trim();
+			seller_name = seller.textContent.trim();
 			let sellerParams = this.amazonParser.getParameters( seller.getAttribute('href') );
 			console.log('Params', sellerParams );
 
@@ -159,8 +170,8 @@ class ProductPage
 			}
 		}
 
-		if( vendor_name )
-			product.sellers.push( vendor_name.toLowerCase() );
+		if( seller_name )
+			product.sellers.push( seller_name.toLowerCase() );
 
 		var lefts	= document.querySelectorAll('span.a-size-medium.a-color-price');
 		if( lefts )
@@ -259,8 +270,8 @@ class ProductPage
 				,qty	: product.left
 			};
 
-			if( vendor_name )
-				stock.seller = vendor_name;
+			if( seller_name )
+				stock.seller = seller_name;
 
 			if( seller_id )
 				stock.seller_id = seller_id;
@@ -297,8 +308,8 @@ class ProductPage
 
 		var sale = document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
 		let offer	= {};
-		if( vendor_name )
-			offer.seller = vendor_name;
+		if( seller_name )
+			offer.seller = seller_name;
 
 		if( seller_id )
 		{
@@ -712,33 +723,92 @@ class ProductPage
 			product = this.productUtils.createNewProductObject();
 			product.asin = this.amazonParser.getValueSelector(box,'input[name="ASIN"]');
 
+
 			let shipFromSold	= this.amazonParser.getValueSelector( box, '#merchant-info');
+			if( shipFromSold )
+				shipFromSold = shipFromSold.replace(/\s+/g,' ');
 
-			//let shipTextx		= '';
-			let vendor_name	= '';
+			let shipFromSoldElement	= document.querySelector('#merchant-info');
+			let seller_name	= null;
+			let seller_id	= null;
+			let fullfilled_by = null;
 
-			let soldByThirdParty = this.amazonParser.getValueSelector( box,'#soldByThirdParty');
-
-			if( soldByThirdParty && /Sold by/.test( soldByThirdParty ) )
+			if( /^Ships from and sold by /.test( shipFromSold ) && shipFromSoldElement )
 			{
-				vendor_name = soldByThirdParty.replace(/.*Sold by /,'');
+				let a = shipFromSoldElement.querySelector('a');
+				if( a )
+				{
+					let href = a.getAttribute('href');
+					let params = this.amazonParser.getParameters( href );
+
+					if( 'seller' in params )
+					{
+						seller_id = params.seller;
+					}
+					seller_name = a.textContent.trim();
+					fullfilled_by	= a.textContent.trim();
+				}
+
+			}
+			else if( /^Sold by .+ and Fulfilled by .+/ && shipFromSoldElement )
+			{
+				let a = shipFromSoldElement.querySelectorAll('a');
+
+				if( a.length == 2 )
+				{
+					let href	= a[0].getAttribute('href');
+					let params	= this.amazonParser.getParameters( href );
+
+					if( 'seller' in params )
+					{
+						seller_id = params.seller;
+					}
+
+					seller_name = a[0].textContent.trim();
+					fullfilled_by = a[1].textContent.trim();
+				}
+				else
+				{
+					console.log('PP::GBP::N2HR must_never_happen '+window.location.href );
+				}
+			}
+			if( /^In stock. Sold by /.test( shipFromSold ) && shipFromSoldElement)
+			{
+				let a = shipFromSoldElement.querySelectorAll('a');
+
+				if( a.length == 2 )
+				{
+					let href	= a[0].getAttribute('href');
+					let params	= this.amazonParser.getParameters( href );
+
+					if( 'seller' in params )
+					{
+						seller_id = params.seller;
+					}
+
+					seller_name = a[0].textContent.trim();
+				}
 			}
 
-			let fullfilled_by = '';
 
 			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
 			{
 				fullfilled_by	= 'AMAZON';
-				vendor_name		= 'Amazon.com';
+				seller_name = 'Amazon.com';
+				seller_id		= 'amazon.com';
 				product.sellers.push( 'amazon.com');
 			}
+
+			if( !( seller_id ) )
+				this.amazonParser.getValueSelector( box, 'input[name="merchantID"]');
+
 
 			let offer = {
 				rsid			: this.amazonParser.getValueSelector( box, 'input[name="rsid"]')
 				,price			: this.amazonParser.getValueSelector( box, '#price_inside_buybox' )
-				,seller_id		: this.amazonParser.getValueSelector( box, 'input[name="merchantID"]')
+				,seller_id		: seller_id
 				,shipping		: this.amazonParser.getValueSelector( box, '#price-shipping-message')
-				,vendor_name	: vendor_name
+				,seller_name	: seller_name
 				,fullfilled_by	: fullfilled_by
 			};
 

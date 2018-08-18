@@ -89,60 +89,81 @@ class ProductUtils
 			newProduct[ k ] = oldProduct[ k ];
 		});
 
-		if( !newProduct.stock )
+		if( !('stock' in newProduct) )
 			newProduct.stock = [];
 
-		this.overlapingInfo
-		(
-			oldProduct.stock
-			,newProduct.stock
-			,(stock)=>
+		if( !('stock' in oldProduct) )
+			oldProduct.stock = [];
+
+
+
+		let pKGenerator = (stock)=>
+		{
+			let k = "";
+
+			if( 'time' in stock )
 			{
-				let k = "";
-
-				if( qty in stock )
-					k = qty;
-
-				if( "seller_id" in stock )
-					k+="_"+seller_id;
-
-				if( 'time' in stock )
-				{
-					k+="_"+stock.time.substring(0,13);
-				}
-
-				return k;
+				k+="_"+stock.time.substring(0,13);
 			}
-			, (element,isOverlap)=>
-			{
-				if( !isOverlap )
-					newProduct.stock.push( element );
-			}
-		);
 
-		if( !newProduct.offers )
+			if( 'qty' in stock )
+				k = stock.qty;
+
+			if( "seller_id" in stock )
+				k+="_"+stock.seller_id;
+
+			return k;
+		};
+
+
+		let sK = {};
+
+		let joiner = ( stock )=>
+		{
+			let  k = pKGenerator( stock );
+			sK[ k ] = stock;
+		};
+
+		oldProduct.stock.forEach( joiner );
+		newProduct.stock.forEach( joiner );
+
+		newProduct.stock = Object.values( sK );
+
+		if( !( 'offers' in newProduct ) )
 			newProduct.offers = [];
 
-		this.overlapingInfo(
-			oldProduct.offers
-			,newProduct.offers
-			,(offer)=>
-			{
-				return offer.price+' '+offer.time+' '+offer.sellerName+' '+( offer.is_prime ? 'prime' :'' )+( 'condition' in offer ? ' '+offer.condition : 'New' );
-			}
-			,(offer, isOverlap)=>
-			{
-				if( 'qid' in offer )
-				{
-					delete  offer.qid;
-				}
+		if( !('offers' in oldProduct)  )
+			oldProduct.offers = [];
 
-				if( !isOverlap )
-				{
-					newProduct.offers.push( offer );
-				}
+
+		let offerGenerator = (offer)=>
+		{
+			let k = '';
+			if( 'time' in offer )
+			{
+				k += offer.time.substring(0,13);
 			}
-		);
+			if( 'seller_id' in offer && offer.seller_id )
+			{
+				k+= offer.seller_id;
+			}
+			if( 'price' in offer )
+				k+= offer.price;
+
+			return k;
+		};
+
+		let offersKeys = {};
+
+		let offersJoiner = (offer)=>
+		{
+			let k = offerGenerator( offer );
+			offersKeys[ k ] = offer;
+		};
+
+		oldProduct.offers.forEach( offersJoiner );
+		newProduct.offers.forEach( offersJoiner );
+		newProduct.offers = Object.values( offersKeys );
 
 		return newProduct;
 	}
