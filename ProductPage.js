@@ -13,6 +13,52 @@ class ProductPage
 
 		let p = null;
 
+		let seller_id = null;
+
+
+
+		let getSellerId = (obj)=>
+		{
+			if( 'seller_id' in obj )
+				return obj.seller_id;
+
+			return null;
+		};
+
+		let setSellerId = (obj, seller_id)=>
+		{
+			if( !('seller_id' in obj) || !obj.seller_id )
+			{
+				obj.seller_id = seller_id;
+			}
+		};
+
+
+		if( p1.stock.length )
+			seller_id = getSellerId( p1.stock[0] );
+
+		if( !seller_id && p2 && p2.stock.length )
+			seller_id = getSellerId( p2.stock[0] );
+
+		if( !seller_id && p1.offers.length )
+			seller_id = getSellerId( p1.offers[0] );
+
+		if( !seller_id && p2 && p2.offers.length )
+			seller_id = getSellerId( p2.offers[0] );
+
+
+		if( p1.stock.length && seller_id )
+			setSellerId( p1.stock[0], seller_id );
+
+		if( p2 && p2.stock.length && seller_id  )
+			setSellerId( p2.stock[0], seller_id );
+
+		if( p1.offers.length && seller_id  )
+			setSellerId( p1.offers[0], seller_id );
+
+		if( p2 && p2.offers.length && seller_id  )
+			setSellerId( p2.offers[0], seller_id );
+
 		if( p1 && p2 )
 		{
 			p = this.productUtils.mergeProducts( p1, p2 );
@@ -45,10 +91,10 @@ class ProductPage
 		};
 
 		PromiseUtils.tryNTimes(fun,200,20)
-		.catch((e)=>
-		{
-			console.log("AddToCartFails PP::atc38");
-		});
+			.catch((e)=>
+			{
+				console.log("AddToCartFails PP::atc38");
+			});
 	}
 
 	getProductFromProductPage()
@@ -263,7 +309,6 @@ class ProductPage
 
 		if( product.left )
 		{
-			let d = new Date();
 			let stock = {
 				date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
@@ -750,7 +795,7 @@ class ProductPage
 				}
 
 			}
-			else if( /^Sold by .+ and Fulfilled by .+/ && shipFromSoldElement )
+			else if( /^Sold by .+ and Fulfilled by .+/.test( shipFromSold ) && shipFromSoldElement )
 			{
 				let a = shipFromSoldElement.querySelectorAll('a');
 
