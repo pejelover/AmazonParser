@@ -103,7 +103,7 @@ class ProductUtils
 
 			if( 'time' in stock )
 			{
-				k+="_"+stock.time.substring(0,13);
+				k+="_"+stock.time.substring(0,15);
 			}
 
 			if( 'qty' in stock )
