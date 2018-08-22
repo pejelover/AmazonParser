@@ -207,7 +207,6 @@ class ProductPage
 		{
 			seller_name = seller.textContent.trim();
 			let sellerParams = this.amazonParser.getParameters( seller.getAttribute('href') );
-			console.log('Params', sellerParams );
 
 			if( 'seller' in sellerParams )
 			{
@@ -307,7 +306,7 @@ class ProductPage
 			}
 		}
 
-		if( product.left  && product.left != 'In Stock.' )
+		if( product.left  && product.left != 'In Stock.' && product.left !== 'Available from other sellers' )
 		{
 			let stock = {
 				date	: this.productUtils.getDate()
