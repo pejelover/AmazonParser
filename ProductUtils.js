@@ -196,6 +196,12 @@ class ProductUtils
 			});
 		}
 
+		if( 'rating' in product && /Be the first to review this item/.test( product.rating ) )
+		{
+			product.rating	 = 5;
+			product.number_of_ratings = 0;
+		}
+
 		if( 'seller_ids' in product )
 		{
 			let kSellers = {};
