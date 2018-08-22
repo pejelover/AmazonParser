@@ -6,6 +6,19 @@ class ProductSellersPage
 		this.productUtils = productUtils;
 	}
 
+	addToCartBySellerId( seller_id )
+	{
+		let product = this.getProduct();
+		let offer	= product.offers.find( offer => 'seller_id' in offer && offer.seller_id == seller_id );
+
+		if( offer !== undefined && 'add2CarSelector' in offer )
+		{
+			let ele = document.querySelector( offer.add2CarSelector );
+			if( ele )
+				ele.click();
+		}
+	}
+
 	addToCartFirstSeller()
 	{
 		try{
@@ -27,7 +40,6 @@ class ProductSellersPage
 			let seller = div.querySelector('.olpSellerName span>a');
 			if( seller )
 			{
-
 				let offer = {
 					price	:this.amazonParser.getValueSelector(div,'span.olpOfferPrice.a-text-bold')
 					,seller	: seller.textContent
@@ -59,8 +71,6 @@ class ProductSellersPage
 
 			}
 		});
-
-
 	}
 
 	getProduct()
@@ -89,7 +99,12 @@ class ProductSellersPage
 			{
 
 				let input = div.querySelector('input[type="submit"]');
-				let selector = 'input[type="submit"][aria-labelledby="'+input.getAttribute('aria-labelledby')+'"]';
+				let attr = input.getAttribute('aria-labelledby');
+
+				if( attr == null )
+					console.log("IS NULL", input );
+
+				let selector = 'input[type="submit"][aria-labelledby="'+attr+'"]';
 
 				let offer = {
 					price	:this.amazonParser.getValueSelector(div,'span.olpOfferPrice.a-text-bold')
