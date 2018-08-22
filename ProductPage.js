@@ -307,7 +307,7 @@ class ProductPage
 			}
 		}
 
-		if( product.left )
+		if( product.left  && product.left != 'In Stock.' )
 		{
 			let stock = {
 				date	: this.productUtils.getDate()
