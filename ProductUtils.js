@@ -170,6 +170,9 @@ class ProductUtils
 
 	cleanProductNormalize( product )
 	{
+		if( !('seller_ids' in product)  )
+			product.seller_ids = [];
+
 		if( 'offers' in product )
 		{
 			if( !('sellers' in product ) )
@@ -248,16 +251,56 @@ class ProductUtils
 		{
 			product.stock.forEach((stock)=>
 			{
-				if( /Only \d+ left in stock - order soon./.test( stock.qty ) )
-				{
-					stock.qty = stock.qty.replace(/^.*Only (\d+) left in stock - order soon.*$/,'$1');
-				}
+				stock.qty = this.getQty( stock.qty );
 			});
 		}
 		else
 		{
 			product.stock = [];
 		}
+	}
+
+	getQty( qty )
+	{
+
+		if( qty == null  || qty === undefined )
+			return '';
+
+		let msg = /The item quantities were not updated since you've exceeded the maximum number of items that can be stored in the Shopping Cart/;
+
+		if(  msg.test( qty) )
+		{
+			return 'Error > 990';
+		}
+
+		let regex_2 = /This seller has only \d+ of these available. To see if more are available from another seller, go to the product detail page./;
+		let regex_2_replace = /This seller has only (\d+) of these available. To see if more are available from another seller, go to the product detail page./;
+		let regex_3 = /Only \d+ left in stock \(more on the way\)./;
+
+		let regex_3_replace = /Only (\d+) left in stock \(more on the way\)/;
+
+		if( qty === 'Currently unavailable.' )
+		{
+			return 0;
+		}
+		if( /^\d+$/.test( qty ) )
+		{
+			return qty;
+		}
+		if( /Only \d+ left in stock - order soon./.test( qty ) )
+		{
+			return qty.replace(/.*Only (\d+) left in stock - order soon.*/,'$1');
+		}
+		if( regex_2.test( qty ) )
+		{
+			return qty.replace( regex_2_replace, '$1' );
+		}
+		if( regex_3.test( qty ) )
+		{
+			 return qty.replace( regex_3_replace, '$1' );
+		}
+
+		return qty;
 	}
 
 	overlapingInfo( from, to,key ,lambda )
