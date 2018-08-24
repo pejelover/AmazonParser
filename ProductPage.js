@@ -102,12 +102,22 @@ class ProductPage
 		// jshint shadow: true
 		let product 		= this.productUtils.createNewProductObject();
 
+
 		this.amazonParser.getSearchTerms( window.location.search ).forEach((term)=>
 		{
 			product.search.push( term );
 		});
 
 		let version	= this.amazonParser.getVersionLambda('getProductFromProductPage');
+
+
+		product.asin	= this.amazonParser.getAsinFromUrl( window.location.href );
+
+		if( product.asin )
+		{
+			version( product, 'ASIN',1 ,product.asin );
+		}
+
 
 		product.url	= window.location.href;
 
@@ -312,6 +322,7 @@ class ProductPage
 				date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 				,qty	: product.left
+				,asin	: product.asin
 			};
 
 			if( seller_name )
@@ -341,13 +352,6 @@ class ProductPage
 					break;
 				}
 			}
-		}
-
-		product.asin	= this.amazonParser.getAsinFromUrl( window.location.href );
-
-		if( product.asin )
-		{
-			version( product, 'ASIN',1 ,product.asin );
 		}
 
 		var sale = document.getElementById('priceblock_saleprice_row #priceblock_saleprice');

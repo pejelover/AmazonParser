@@ -69,6 +69,7 @@ class CartPage
 				qty		: text
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
+				,asin	: product.asin
 			};
 
 			if( 'smid' in params )
@@ -93,6 +94,7 @@ class CartPage
 				qty	: qtyStr.replace(/^only (\d+) left in stock.*$/i,'$1')
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
+				,asin	: product.asin
 			};
 
 			if( 'seller' in product )
@@ -117,6 +119,7 @@ class CartPage
 					qty	: 999
 					,date	: this.productUtils.getDate()
 					,time	: this.productUtils.getTime()
+					,asin	: product.asin
 				};
 
 				if( 'seller' in product )
@@ -203,7 +206,7 @@ class CartPage
 				let x = div.querySelector('span.sc-action-delete>span');
 				x.click();
 
-				return Promise.resolve( product );
+				return PromiseUtils.resolveAfter( product, 1200 );
 			}
 
 			//The select Button  with label +1
@@ -295,7 +298,7 @@ class CartPage
 				//console.log( product1 );
 
 				if( product1 )
-					client.executeOnBackground('ProductsFound', [product1] );
+					client.executeOnBackground('StockFound', product1.stock );
 
 				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+product1.asin +'"]');
 				product = this.parseProductItem( nDiv );

@@ -6,6 +6,7 @@ class AmazonParser
 		this.productPage	= new ProductPage( this, this.productUtils );
 		this.productSellersPage	= new ProductSellersPage( this, this.productUtils );
 		this.cartPage	= new CartPage( this, this.productUtils );
+		this.prev2cart =  new Prev2Cart( this );
 	}
 	/*
 		Parses the vendor section of
