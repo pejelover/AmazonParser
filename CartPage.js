@@ -203,8 +203,9 @@ class CartPage
 			if( product.stock.length )
 			{
 				//Send Product to database
-				let x = div.querySelector('span.sc-action-delete>span');
-				x.click();
+				let x = div.querySelector('span.sc-action-delete t cinput[value="Delete"]');
+				if( x )
+					x.click();
 
 				return PromiseUtils.resolveAfter( product, 1200 );
 			}
