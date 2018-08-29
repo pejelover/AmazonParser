@@ -95,7 +95,6 @@ class ProductPage
 
 	getProductFromProductPage()
 	{
-		// jshint shadow: true
 		let product 		= this.productUtils.createNewProductObject();
 
 		this.amazonParser.getSearchTerms( window.location.search ).forEach((term)=>
@@ -210,9 +209,9 @@ class ProductPage
 			seller_name	= seller.textContent.trim();
 			let sellerParams	= this.amazonParser.getParameters( seller.getAttribute('href') );
 
-			if( 'seller' in sellerParams )
+			if( sellerParams.has( 'seller') )
 			{
-				seller_id	= sellerParams.seller;
+				seller_id	= sellerParams.get('seller');
 				product.seller_ids.push( seller_id );
 			}
 		}
@@ -270,7 +269,7 @@ class ProductPage
 
 				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
 				{
-					product.left	= text.textContent.trim();
+					product.left	= text.trim();
 					version( product ,'left', 5, product.left);
 					break;
 				}
@@ -290,7 +289,7 @@ class ProductPage
 
 					if( /only \d+ left in stock/i.test( text ) )
 					{
-						product.left	= text.textContent.trim();
+						product.left	= text;
 						version( product ,'left', 6, product.left);
 					}
 
@@ -302,7 +301,7 @@ class ProductPage
 
 					if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
 					{
-						product.left	= text.textContent.trim();
+						product.left	= text;
 						version( product ,'left', 8, product.left);
 					}
 				}
@@ -770,9 +769,9 @@ class ProductPage
 					let href	= a.getAttribute('href');
 					let params	= this.amazonParser.getParameters( href );
 
-					if( 'seller' in params )
+					if( params.has('seller') )
 					{
-						seller_id	= params.seller;
+						seller_id	= params.get('seller');
 					}
 					seller_name	= a.textContent.trim();
 					fullfilled_by	= a.textContent.trim();
@@ -788,9 +787,9 @@ class ProductPage
 					let href	= a[0].getAttribute('href');
 					let params	= this.amazonParser.getParameters( href );
 
-					if( 'seller' in params )
+					if( params.has('seller') )
 					{
-						seller_id	= params.seller;
+						seller_id	= params.get('seller');
 					}
 
 					seller_name	= a[0].textContent.trim();
@@ -810,9 +809,9 @@ class ProductPage
 					let href	= a[0].getAttribute('href');
 					let params	= this.amazonParser.getParameters( href );
 
-					if( 'seller' in params )
+					if( params.has('seller') )
 					{
-						seller_id	= params.seller;
+						seller_id	= params.get('seller');
 					}
 
 					seller_name	= a[0].textContent.trim();
