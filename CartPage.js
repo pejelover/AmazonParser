@@ -49,7 +49,7 @@ class CartPage
 		if( seller )
 			product.sellers.push( seller.textContent.trim().toLowerCase() );
 
-		let params  = {};
+		let params  = new Map();
 
 		if( link )
 		{
@@ -72,9 +72,9 @@ class CartPage
 				,asin	: product.asin
 			};
 
-			if( 'smid' in params )
+			if( params.has( 'smid' ) )
 			{
-				stock.seller_id =  params.smid;
+				stock.seller_id =  params.get('smid');
 			}
 
 			if( 'seller' in product )
@@ -103,9 +103,9 @@ class CartPage
 				stock.seller_url	= seller.getAttribute('href');
 			}
 
-			if( 'smid' in params )
+			if( params.has( 'smid' ) )
 			{
-				stock.seller_id		= params.smid;
+				stock.seller_id		= params.get('smid');
 			}
 
 			product.stock = [ stock ];
@@ -128,9 +128,9 @@ class CartPage
 					stock.seller_url	= seller.getAttribute('href');
 				}
 
-				if( 'smid' in params )
+				if( params.get('smid') )
 				{
-					stock.seller_id		= params.smid;
+					stock.seller_id		= params.get( 'smid' );
 				}
 
 				product.stock = [ stock ];
@@ -153,9 +153,9 @@ class CartPage
 				offer.seller_url	= seller.getAttribute('href');
 			}
 
-			if( 'smid' in params )
+			if( params.has( 'smid' ) )
 			{
-				offer.seller_id = params.smid;
+				offer.seller_id = params.get( 'smid' );
 			}
 
 			product.offers = [ offer ];
@@ -192,7 +192,7 @@ class CartPage
 		let itemsNodeList = form.querySelectorAll( this.getItemsSelector() );
 		let items	= Array.from( itemsNodeList );
 
-		let generator = ( items, (div, index)=>
+		let generator = (div, index)=>
 		{
 			//let z = i.querySelector('select[name="quantity"].a-native-dropdown');
 
@@ -292,7 +292,7 @@ class CartPage
 
 				},250,14).catch((eee)=>
 				{
-					return Promise.reject('It fails to get the message',eee);
+					return Promise.reject('It fails to get the message '+('msg' in eee ? eee['msg']: eee ) );
 				});
 			})
 			.then(( product1 )=>
@@ -325,7 +325,7 @@ class CartPage
 				console.log('It fails on item',perror );
 				return Promise.resolve( null );
 			});
-		});
+		};
 
 		return PromiseUtils.runSequential( items, generator );
 	}
