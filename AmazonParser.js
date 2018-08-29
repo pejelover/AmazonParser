@@ -7,16 +7,19 @@ class AmazonParser
 		this.productSellersPage	= new ProductSellersPage( this, this.productUtils );
 		this.cartPage	= new CartPage( this, this.productUtils );
 		this.prev2cart =  new Prev2Cart( this );
+		this.debug		= false;
 	}
 	/*
 		Parses the vendor section of
 	*/
 
-	log(args)
+	log( ...args )
 	{
 		if( this.debug  )
 		{
-			console.log( args );
+			let args = Array.from( arguments );
+			console.log.apply( console, args );
+			//console.log( args );
 		}
 	}
 
@@ -31,11 +34,13 @@ class AmazonParser
 	getParameters( url )
 	{
 
+		let map = new Map();
+
 		let start 	= url.indexOf('?');
 		let end 	=  url.indexOf('#');
 
 		if( start === -1 )
-			return {};
+			return map;
 
 		let x = url.substring(start+1, end == -1 ? url.length : end  );
 
@@ -47,7 +52,7 @@ class AmazonParser
 
 		let parametersArray	= finalString.split('&');
 
-		let obj = {};
+		//let obj = {};
 
 		for(let i=0;i<parametersArray.length;i++)
 		{
@@ -57,26 +62,41 @@ class AmazonParser
 			{
 				let value = decodeURIComponent( s[ 1 ] ).replace(/\+/g,' ');
 
-				if( s[0] in obj )
+				if( map.has( s[0] ) )
 				{
-					if( Array.isArray( obj[ s[0] ] ) )
-						obj[ s[0] ].push(  value  );
+					let mapValue = map.get( s[0] );
+
+					if( Array.isArray( mapValue ) )
+					{
+						mapValue.push( s[0] );
+					}
 					else
-						obj[ s[0] ] = [ obj[s[0] ], value ];
+					{
+						let array = [ mapValue ];
+						array.push( value );
+						map.set( s[0], array );
+					}
+
+					//if( Array.isArray( obj[ s[0] ] ) )
+					//	obj[ s[0] ].push(  value  );
+					//else
+					//	obj[ s[0] ] = [ obj[s[0] ], value ];
 				}
 				else
 				{
-					obj[ s[0] ] = value;
+					map.set( s[0], value );
+					//obj[ s[0] ] = value;
 				}
 			}
 		}
-		return obj;
+		return map;
 	}
 
 	getProductsFromVendorInfoPageSectionProducts()
 	{
 		let version		= this.getVersionLambda('VendorProductSectionParser');
-		let productsArray	= document.queryAll('#products-results-data  .product-details');
+		let productsArray	= document.querySelectorAll('#products-results-data  .product-details');
+		let products		= [];
 
 		for(var i=0;i<productsArray.length;i++)
 		{
@@ -119,7 +139,7 @@ class AmazonParser
 				version(product,'no_price',1, product.price );
 			}
 
-			productsArray.push( product );
+			products.push( product );
 		}
 
 		return productsArray;
@@ -205,7 +225,7 @@ class AmazonParser
 
 		if( asin.includes('https://' ) )
 		{
-			asin = url.replace(/^.*\/gp\/offer-listing\/(\w+)\/.*/,'$1');
+			asin = url.replace(/^.*\/gp\/offer-listing\/(\w+)\/?.*/,'$1');
 		}
 
 		if( asin.includes('https://') )
@@ -300,22 +320,6 @@ class AmazonParser
 	{
 		let parameters	= this.getParameters( window.location.search );
 		let search		= [];
-		let paramKeys	= ['field-keywords'];
-
-		paramKeys.forEach((key)=>
-		{
-			if( key in parameters )
-			{
-				if( Array.isArray( parameters[ key ] ) )
-				{
-					parameters[key].forEach((value)=>{ search.push( value ); });
-				}
-				else
-				{
-					search.push( parameters[ key ] );
-				}
-			}
-		});
 
 		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
 		let items = Array.from( s );
@@ -504,20 +508,20 @@ class AmazonParser
 	getSearchTerms( url )
 	{
 		let parameters	= this.getParameters( url );
-		let search		= [];
 		let paramKeys	= ['field-keywords'];
+		let search = [];
 
 		paramKeys.forEach((key)=>
 		{
-			if( key in parameters )
+			if( parameters.has( key ) )
 			{
-				if( Array.isArray( parameters[ key ] ) )
+				if( Array.isArray( parameters.get( key ) ) )
 				{
-					parameters[key].forEach((value)=>{ search.push( value.trim() ); });
+					parameters.get( key ).forEach((value)=>{ search.push( value.trim() ); });
 				}
 				else
 				{
-					search.push( parameters[ key ].trim() );
+					search.push( parameters.get( key ).trim() );
 				}
 			}
 		});
