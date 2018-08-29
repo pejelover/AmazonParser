@@ -13,18 +13,19 @@ class ProductSellersPage
 		let product = this.getProduct();
 		let offer	= product.offers.find( offer => 'seller_id' in offer && offer.seller_id == searchSeller );
 
-		if( offer !== undefined && 'add2CarSelector' in offer )
+		if( offer !== undefined && 'add2CarSelector' in offer && offer.add2CarSelector )
 		{
 			let ele = document.querySelector( offer.add2CarSelector );
+
 			if( ele )
+			{
 				ele.click();
-			else
-				console.log('Looking for '+seller_id );
+				return true;
+			}
+
+			return false;
 		}
-		else
-		{
-			console.log('Looking for '+seller_id );
-		}
+		return false;
 	}
 
 	addToCartFirstSeller()
@@ -64,15 +65,19 @@ class ProductSellersPage
 			if( seller )
 			{
 
+				let attr = null;
+
 				let input = div.querySelector('input[type="submit"]');
-				let attr = input.getAttribute('aria-labelledby');
+				if( input  )
+					attr = input.getAttribute('aria-labelledby');
 
 				if( attr == null )
 					console.log("IS NULL", input );
 
 				let isAmazon = seller.tagName == 'IMG' && seller.getAttribute("alt") === 'Amazon.com';
 
-				let selector = 'input[type="submit"][aria-labelledby="'+attr+'"]';
+				let selector = attr ===  null ? null : 'input[type="submit"][aria-labelledby="'+attr+'"]';
+
 				let sellerName = isAmazon ? 'amazon.com' : seller.textContent;
 				let seller_url	= seller.tagName === 'IMG' ? null : seller.getAttribute('href');
 
@@ -91,10 +96,10 @@ class ProductSellersPage
 				{
 					let params = this.amazonParser.getParameters( seller.getAttribute('href') );
 
-					if( 'seller' in params )
+					if( params.has('seller') )
 					{
-						product.seller_ids.push( params.seller );
-						offer.seller_id = params.seller;
+						product.seller_ids.push( params.get( 'seller' ) );
+						offer.seller_id = params.get('seller');
 					}
 				}
 				else if( isAmazon )
@@ -116,5 +121,20 @@ class ProductSellersPage
 		});
 
 		return product;
+	}
+	getNextPageSelector()
+	{
+		return '#olpOfferListColumn ul.a-pagination>li.a-last>a';
+	}
+	hasNextPage()
+	{
+		let nextButton = document.querySelector( this.getNextPageSelector() );
+		return nextButton !== null;
+	}
+
+	goToNextPage()
+	{
+		let nextButton = document.querySelector( this.getNextPageSelector() );
+		nextButton.click();
 	}
 }
