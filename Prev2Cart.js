@@ -7,7 +7,7 @@ class Prev2Cart
 	}
 	hasError( )
 	{
-		let x = document.querySelector('#cart-important-message-box h4');
+		let x = document.querySelector('#cart-important-message-box .a-alert-warning p');
 		if( x )
 		{
 			if( /^Your Update Failed. Please try again/.test( x.textContent.trim() ) )
