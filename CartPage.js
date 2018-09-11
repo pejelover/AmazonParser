@@ -283,11 +283,7 @@ class CartPage
 					let asin = div.getAttribute('data-asin');
 					let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
 					let it = this.parseProductItem( nDiv );
-					//console.log( it );
-					//console.log( i );
-					//let e = i.querySelector('.sc-quantity-update-message.a-spacing-top-mini');
-					//console.log( e );
-					//return e !== null;
+
 					return it.stock.length > 0 ? it : false;
 
 				},250,14).catch((eee)=>
@@ -322,7 +318,7 @@ class CartPage
 			})
 			.catch((perror)=>
 			{
-				console.log('It fails on item',perror );
+				console.log(perror );
 				return Promise.resolve( null );
 			});
 		};
