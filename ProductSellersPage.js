@@ -83,6 +83,7 @@ class ProductSellersPage
 
 				let offer = {
 					price	:this.amazonParser.getValueSelector(div,'span.olpOfferPrice.a-text-bold')
+					,asin	: product.asin
 					,seller	: sellerName
 					,shipping	: this.amazonParser.getValueSelector( div,'.olpShippingInfo')
 					,condition	: this.amazonParser.getValueSelector(div,'.olpCondition')
@@ -90,6 +91,12 @@ class ProductSellersPage
 					,time		: this.productUtils.getTime()
 					,add2CarSelector : selector
 				};
+
+
+				if( /shipped by Amazon/.test( offer.shipping ) )
+				{
+					offer.fullfill_by = 'Amazon.com';
+				}
 
 
 				if( seller_url )

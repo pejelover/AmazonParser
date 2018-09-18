@@ -43,11 +43,21 @@ class CartPage
 		product.asin	= i.getAttribute('data-asin');
 
 		let link	= i.querySelector('a.sc-product-link');
+		let shipped	= i.querySelector('.sc-seller');
+
+		let fullfilled_by	= null;
 
 		let seller	= i.querySelector('.sc-seller a');
 
 		if( seller )
 			product.sellers.push( seller.textContent.trim().toLowerCase() );
+
+		let shippedText = this.amazonParser.getValueSelector(i,'.sc-seller');
+
+		if(shipped && /shipped From: /.test(  shipped ) && seller )
+		{
+			fullfilled_by = seller.textContent.trim();
+		}
 
 		let params  = new Map();
 
@@ -58,6 +68,7 @@ class CartPage
 		}
 
 		let warningMessage  = i.querySelector('.sc-quantity-update-message>.a-box.a-alert');
+		let stock = null;
 
 		if( warningMessage )
 		{
@@ -137,15 +148,37 @@ class CartPage
 			}
 		}
 
+		if( product.stock.length )
+		{
+			if( fullfilled_by )
+			{
+				product.stock[0].fullfilled_by = fullfilled_by;
+				product.stock[0].is_prime = false;
+			}
+			else
+			{
+				product.stock[0].is_prime = true;
+			}
+		}
+
 		let price = this.amazonParser.getValueSelector(i,'span.sc-product-price');
 
 		if( price )
 		{
+
+			if( product.stock.length  )
+				product.stock[0].price = price;
+
 			let offer = {
 				price	: price
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 			};
+
+			if( fullfilled_by )
+			{
+				offer.fullfilled_by = fullfilled_by;
+			}
 
 			if( 'seller' in product )
 			{
@@ -202,13 +235,24 @@ class CartPage
 
 			if( product.stock.length )
 			{
-				//Send Product to database
-				let x = div.querySelector('span.sc-action-delete>span');
+				return Promise.resolve( product, 1200 )
+				.then((p)=>
+				{
+					let input = div.querySelector('span.sc-action-delete>span input');
+					if( input )
+					{
+						input.click();
+						return Promise.resolve( p );
+					}
 
-				if( x )
-					x.click();
+					//Send Product to database
+					let x = div.querySelector('span.sc-action-delete>span');
 
-				return PromiseUtils.resolveAfter( product, 1200 );
+					if( x )
+						x.click();
+
+					return Promise.resolve( p );
+				});
 			}
 
 			//The select Button  with label +1

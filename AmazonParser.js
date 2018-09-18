@@ -104,7 +104,6 @@ class AmazonParser
 
 			version(product,'extracted',1,window.location.href);
 
-
 			var ptitle = productsArray[i].querySelector('.product-title a[title]');
 
 			if( ptitle )
@@ -125,6 +124,7 @@ class AmazonParser
 			}
 
 			var nrating = productsArray[i].querySelector('.product-rating:not([title])');
+
 			if( nrating  )
 			{
 				product.number_of_ratings = nrating.textContent.trim();
@@ -237,6 +237,11 @@ class AmazonParser
 		{
 			asin = url.replace(/.*\/dp\/(\w+)$/,'$1');
 		}
+
+		 if( asin.includes('/gp/aag/main' ) )
+    	{
+    	    asin  = url.replace(/\/gp\/aag\/main\/ref=olp_merch_name_\d+\?ie=UTF8&asin=(\w+)&.*/,'$1');
+    	}
 
 		return asin;
 	}
