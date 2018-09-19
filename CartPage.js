@@ -54,7 +54,7 @@ class CartPage
 
 		let shippedText = this.amazonParser.getValueSelector(i,'.sc-seller');
 
-		if(shipped && /shipped From: /.test(  shipped ) && seller )
+		if(shipped && /Shipped from: /.test(  shippedText ) && seller )
 		{
 			fullfilled_by = seller.textContent.trim();
 		}
@@ -235,6 +235,8 @@ class CartPage
 
 			if( product.stock.length )
 			{
+				client.executeOnBackground('StockFound', product.stock );
+
 				return Promise.resolve( product, 1200 )
 				.then((p)=>
 				{
@@ -328,6 +330,9 @@ class CartPage
 					let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
 					let it = this.parseProductItem( nDiv );
 
+					if( it.stock.length )
+						client.executeOnBackground('StockFound', it.stock );
+
 					return it.stock.length > 0 ? it : false;
 
 				},250,14).catch((eee)=>
@@ -348,11 +353,19 @@ class CartPage
 
 				if( product.stock.length )
 				{
+					let input = nDiv.querySelector('span.sc-action-delete>span input');
+					if( input )
+					{
+						input.click();
+						return PromiseUtils.resolveAfter( product, 700 );
+					}
+
+
 					//Sen
 					let x = nDiv.querySelector('span.sc-action-delete>span');
 					x.click();
 
-					return PromiseUtils.resolveAfter( product, 300 );
+					return PromiseUtils.resolveAfter( product, 700 );
 				}
 				else
 				{
