@@ -179,6 +179,10 @@ class CartPage
 			{
 				offer.fullfilled_by = fullfilled_by;
 			}
+			else
+			{
+				offer.is_prime = true;
+			}
 
 			if( 'seller' in product )
 			{
@@ -237,14 +241,15 @@ class CartPage
 			{
 				client.executeOnBackground('StockFound', product.stock );
 
-				return Promise.resolve( product, 1200 )
+				return Promise.resolve( product )
 				.then((p)=>
 				{
 					let input = div.querySelector('span.sc-action-delete>span input');
+
 					if( input )
 					{
 						input.click();
-						return Promise.resolve( p );
+						return PromiseUtils.resolveAfter( p, 700 );
 					}
 
 					//Send Product to database
@@ -253,7 +258,7 @@ class CartPage
 					if( x )
 						x.click();
 
-					return Promise.resolve( p );
+					return PromiseUtils.resolveAfter( p, 700 );
 				});
 			}
 
