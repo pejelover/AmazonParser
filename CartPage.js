@@ -340,7 +340,7 @@ class CartPage
 
 					return it.stock.length > 0 ? it : false;
 
-				},250,14).catch((eee)=>
+				},350,14).catch((eee)=>
 				{
 					return Promise.reject('It fails to get the message '+('msg' in eee ? eee['msg']: eee ) );
 				});

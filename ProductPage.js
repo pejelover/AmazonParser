@@ -31,8 +31,38 @@ class ProductPage
 			}
 		};
 
+
+		let is_prime = false;
+
+
+
+
+
 		if( p1.stock.length )
+		{
 			seller_id	= getSellerId( p1.stock[0] );
+			if( p1.stock[0].is_prime )
+				is_prime = true;
+		}
+
+		if( p2 && p2.stock.length )
+		{
+			if( p2.stock[0].is_prime )
+				is_prime = true;
+		}
+
+		if( p1.offers.length )
+		{
+			if( p1.offers[0].is_prime )
+				is_prime = true;
+		}
+
+		if(p2 && p2.offers.length )
+		{
+			if( p2.offers[0].is_prime )
+				is_prime = true;
+		}
+
 
 		if( !seller_id && p2 && p2.stock.length )
 			seller_id	= getSellerId( p2.stock[0] );
@@ -55,9 +85,26 @@ class ProductPage
 		if( p2 && p2.offers.length && seller_id )
 			setSellerId( p2.offers[0], seller_id );
 
+
+		if( p1.stock.length )
+			p1.stock[0].is_prime = is_prime;
+
+		if( p2 && p2.stock.length )
+			p2.stock[0].is_prime = is_prime;
+
+		if( p1.offers.length )
+			p1.offers[0].is_prime = is_prime;
+
+		if( p2 && p2.offers.length )
+			p2.offers[0].is_prime = is_prime;
+
+
+
+
+
 		if( p1 && p2 )
 		{
-			p	= this.productUtils.mergeProducts( p1, p2 );
+			p	= this.productUtils.mergeProducts( p1, p2, true );
 		}
 		else if( p1 )
 		{
@@ -216,6 +263,25 @@ class ProductPage
 			}
 		}
 
+
+		let is_prime = false;
+
+
+		let prime	= document.querySelector('#priceblock_ourprice_row i.a-icon.a-icon-prime');
+
+
+        if( prime )
+        	is_prime  = true;
+
+		prime = document.querySelector('#price-shipping-message i.a-icon-prime');
+
+		if( prime )
+		{
+			is_prime	= true;
+		}
+
+
+
 		if( seller_name )
 			product.sellers.push( seller_name.toLowerCase() );
 
@@ -315,6 +381,7 @@ class ProductPage
 				,time	: this.productUtils.getTime()
 				,qty	: product.left
 				,asin	: product.asin
+				,is_prime : is_prime
 			};
 
 			if( seller_name )
@@ -404,13 +471,6 @@ class ProductPage
 			offer.shipping	= shipping.textContent;
 		}
 
-		let prime	= document.querySelector('#priceblock_ourprice_row i.a-icon.a-icon-prime');
-
-		if( prime )
-		{
-			offer.is_prime	= true;
-		}
-
 		if( typeof offer.shipping	=== 'undefined' )
 		{
 
@@ -432,6 +492,8 @@ class ProductPage
 				version( product ,'shipping', 2, product.price );
 			}
 		}
+
+		offer.is_prime = is_prime;
 
 		var fullfilled	= document.querySelector('#merchant-info');
 
@@ -818,6 +880,17 @@ class ProductPage
 				}
 			}
 
+
+
+			let prime = box.querySelector('#shippingMessageInsideBuyBox_feature_div i.a-prime-icon');
+			let is_prime = true;
+
+			if( prime )
+				is_prime = true;
+
+			//Currently unavailable.
+
+
 			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
 			{
 				fullfilled_by	= 'AMAZON';
@@ -836,7 +909,28 @@ class ProductPage
 				,shipping		: this.amazonParser.getValueSelector( box, '#price-shipping-message')
 				,seller_name	: seller_name
 				,fullfilled_by	: fullfilled_by
+				,time			: this.productUtils.getTime()
+				,is_prime		: true
 			};
+
+			let availability = box.querySelector('#availability');
+
+			if( availability )
+			{
+
+				let qtyText = availability.textContent.replace(/\n/g, ' ' ).trim();
+
+				if( /Only \d+ left in stock - order soon./.test( qtyText ) )
+				{
+					product.stock = [{
+						seller_id	: seller_id
+						,qty		: qtyText
+						,asin		: product.asin
+						,time		: this.productUtils.getTime()
+					}];
+				}
+			}
+
 
 			product.offers	= [ offer ];
 		}

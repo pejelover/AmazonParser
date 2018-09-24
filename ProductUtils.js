@@ -44,7 +44,7 @@ class ProductUtils
 		return dateStr;
 	}
 
-	mergeProducts( op, np )
+	mergeProducts( op, np, mergeOffersAndStock )
 	{
 		let isOpOldProduct = true;
 
@@ -89,81 +89,85 @@ class ProductUtils
 			newProduct[ k ] = oldProduct[ k ];
 		});
 
-		if( !('stock' in newProduct) )
-			newProduct.stock = [];
-
-		if( !('stock' in oldProduct) )
-			oldProduct.stock = [];
-
-
-
-		let pKGenerator = (stock)=>
+		if( mergeOffersAndStock )
 		{
-			let k = "";
 
-			if( 'time' in stock )
+			if( !('stock' in newProduct) )
+				newProduct.stock = [];
+
+			if( !('stock' in oldProduct) )
+				oldProduct.stock = [];
+
+
+
+			let pKGenerator = (stock)=>
 			{
-				k+="_"+stock.time.substring(0,15);
-			}
+				let k = "";
 
-			if( 'qty' in stock )
-				k = stock.qty;
+				if( 'time' in stock )
+				{
+					k+="_"+stock.time.substring(0,15);
+				}
 
-			if( "seller_id" in stock )
-				k+="_"+stock.seller_id;
+				if( 'qty' in stock )
+					k = stock.qty;
 
-			return k;
-		};
+				if( "seller_id" in stock )
+					k+="_"+stock.seller_id;
 
-
-		let sK = {};
-
-		let joiner = ( stock )=>
-		{
-			let  k = pKGenerator( stock );
-			sK[ k ] = stock;
-		};
-
-		oldProduct.stock.forEach( joiner );
-		newProduct.stock.forEach( joiner );
-
-		newProduct.stock = Object.values( sK );
-
-		if( !( 'offers' in newProduct ) )
-			newProduct.offers = [];
-
-		if( !('offers' in oldProduct)  )
-			oldProduct.offers = [];
+				return k;
+			};
 
 
-		let offerGenerator = (offer)=>
-		{
-			let k = '';
-			if( 'time' in offer )
+			let sK = {};
+
+			let joiner = ( stock )=>
 			{
-				k += offer.time.substring(0,13);
-			}
-			if( 'seller_id' in offer && offer.seller_id )
+				let  k = pKGenerator( stock );
+				sK[ k ] = stock;
+			};
+
+			oldProduct.stock.forEach( joiner );
+			newProduct.stock.forEach( joiner );
+
+			newProduct.stock = Object.values( sK );
+
+			if( !( 'offers' in newProduct ) )
+				newProduct.offers = [];
+
+			if( !('offers' in oldProduct)  )
+				oldProduct.offers = [];
+
+
+			let offerGenerator = (offer)=>
 			{
-				k+= offer.seller_id;
-			}
-			if( 'price' in offer )
-				k+= offer.price;
+				let k = '';
+				if( 'time' in offer )
+				{
+					k += offer.time.substring(0,13);
+				}
+				if( 'seller_id' in offer && offer.seller_id )
+				{
+					k+= offer.seller_id;
+				}
+				if( 'price' in offer )
+					k+= offer.price;
 
-			return k;
-		};
+				return k;
+			};
 
-		let offersKeys = {};
+			let offersKeys = {};
 
-		let offersJoiner = (offer)=>
-		{
-			let k = offerGenerator( offer );
-			offersKeys[ k ] = offer;
-		};
+			let offersJoiner = (offer)=>
+			{
+				let k = offerGenerator( offer );
+				offersKeys[ k ] = offer;
+			};
 
-		oldProduct.offers.forEach( offersJoiner );
-		newProduct.offers.forEach( offersJoiner );
-		newProduct.offers = Object.values( offersKeys );
+			oldProduct.offers.forEach( offersJoiner );
+			newProduct.offers.forEach( offersJoiner );
+			newProduct.offers = Object.values( offersKeys );
+		}
 
 		return newProduct;
 	}
@@ -173,31 +177,31 @@ class ProductUtils
 		if( !('seller_ids' in product)  )
 			product.seller_ids = [];
 
-		if( 'offers' in product )
-		{
-			if( !('sellers' in product ) )
-			{
-				product.sellers = [];
-			}
+		//if( 'offers' in product )
+		//{
+		//	if( !('sellers' in product ) )
+		//	{
+		//		product.sellers = [];
+		//	}
 
 
-			product.offers.forEach((offer )=>
-			{
-				if( 'add2CarSelector' in offer )
-				{
-					delete offer.add2CarSelector;
-				}
+		//	product.offers.forEach((offer )=>
+		//	{
+		//		if( 'add2CarSelector' in offer )
+		//		{
+		//			delete offer.add2CarSelector;
+		//		}
 
-				if( 'seller' in offer )
-				{
-					product.sellers.push( offer.seller.toLowerCase() );
-				}
-				if( 'seller_id' in offer )
-				{
-					product.seller_ids.push( offer.seller_id );
-				}
-			});
-		}
+		//		if( 'seller' in offer )
+		//		{
+		//			product.sellers.push( offer.seller.toLowerCase() );
+		//		}
+		//		if( 'seller_id' in offer )
+		//		{
+		//			product.seller_ids.push( offer.seller_id );
+		//		}
+		//	});
+		//}
 
 		if( 'rating' in product && /Be the first to review this item/.test( product.rating ) )
 		{
@@ -224,8 +228,8 @@ class ProductUtils
 			delete product.qids;
 		}
 
-		if( !( 'offers' in product) )
-			product.offers  = [];
+		if( 'offers' in product )
+			delete product.offers;
 
 		if( 'time' in product )
 		{
@@ -249,14 +253,7 @@ class ProductUtils
 
 		if( 'stock' in product )
 		{
-			product.stock.forEach((stock)=>
-			{
-				stock.qty = this.getQty( stock.qty );
-			});
-		}
-		else
-		{
-			product.stock = [];
+			delete product.stock;
 		}
 	}
 

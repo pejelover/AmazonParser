@@ -270,7 +270,10 @@ class AmazonParser
 
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
 		//
-		https://www.amazon.com/gp/product/handle-buy-box/
+		if( /^https:\/\/www.amazon.com\/gp\/product\/handle-buy-box\//.test( cleanUrl ) )
+		{
+			return 'HANDLE_BUY_BOX';
+		}
 
 		//https://www.amazon.com/Chosen-Foods-Propellant-Free-Pressure-High-Heat/dp/B01NBHW921/ref=sr_1_3_a_it?s=office-products&ie=UTF8&qid=1533084933&sr=8-3&keywords=Choosen%2BFoods&th=1
 		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
