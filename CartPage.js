@@ -12,6 +12,149 @@ class CartPage
 
 	}
 
+	getSaveForLaterItemsSelector( asin )
+	{
+		if( asin )
+			return '#sc-saved-cart [data-asin="'+asin+'"]';
+		return '#sc-saved-cart [data-asin]';
+	}
+
+
+	moveToCartSaveForLaterProcess( asin )
+	{
+		if( asin === null )
+		{
+			let div = this.getSavedForLaterItem( null );
+
+			if( div === null )
+				return Promise.reject( 'No Save For Later items found' );
+
+			asin = div.getAttribute('data-asin');
+		}
+
+		return PromiseUtils.tryNTimes(()=>
+		{
+			let nDiv = this.getSavedForLaterItem( asin );
+
+			let input = nDiv.querySelector('input[value="Move to Cart"]');
+
+			if( input )
+			{
+				input.click();
+			}
+		},300,14);
+	}
+
+	moveToCartSaveForLater( asin )
+	{
+		let div = this.getSavedForLaterItem( asin );
+		if( div === null )
+		{
+			return;
+		}
+
+		let moveToCart = div.querySelector('input[value="Move to Cart"]');
+
+		if( moveToCart )
+		{
+			moveToCart.click();
+		}
+	}
+
+
+	getSavedForLaterProduct( asin )
+	{
+		let item = this.getSavedForLaterItem( asin );
+
+		if( item !== null )
+			return this.parseProductItem( item );
+
+		return null;
+	}
+
+	getSavedForLaterItem( asin )
+	{
+		return document.querySelector( this.getSaveForLaterItemsSelector( asin ) );
+	}
+
+	removeSavedForLater( asin )
+	{
+		//B015TB2LY2
+		// '#sc-saved-cart [data-asin="B015TB2LY2"]' ));
+		let div= document.querySelector( this.getSaveForLaterItemsSelector( asin ) );
+
+		let input = div.querySelector('span.sc-action-delete>span input');
+
+		if( input )
+		{
+			input.click();
+			return;
+		}
+
+		//Send Product to database
+		let x = div.querySelector('span.sc-action-delete>span');
+
+		if( x )
+			x.click();
+
+		//waitTillElementReady
+	}
+
+	getCartItemByAsin( asin )
+	{
+		let form = document.querySelector('#activeCartViewForm');
+		let div	= form.querySelector( this.getItemsSelector( asin ) );
+		return div;
+	}
+
+	removeItemByAsin( asin )
+	{
+		let form = document.querySelector('#activeCartViewForm');
+		let div	= form.querySelector( this.getItemsSelector( asin ) );
+		let input = div.querySelector('span.sc-action-delete>span input');
+
+		if( input )
+		{
+			input.click();
+		}
+
+		//Send Product to database
+		let x = div.querySelector('span.sc-action-delete>span');
+
+		if( x )
+			x.click();
+	}
+
+
+	parseFirstItem()
+	{
+		let form = document.querySelector('#activeCartViewForm');
+
+		let item	= form.querySelector( this.getItemsSelector( null ) );
+
+		if( item === null )
+			return null;
+
+		return this.parseProductItem( item );
+	}
+
+	getSaveForLaterCount()
+	{
+		let saveForLater = document.querySelector('#sc-saved-cart .sc-list-head h2>.sc-list-caption');
+		if( saveForLater )
+		{
+			let text = saveForLater.textContent.trim();
+			if( /Saved for later \(\d+ items?\)/.test( text ) )
+			{
+				let x = text.replace( /\D/g, '');
+				let aint = parseInt( x );
+
+				return isNaN( aint ) ? 0 : aint;
+			}
+		}
+		return 0;
+	}
+
 	deleteItemsWithStock( products )
 	{
 		let p = Array.isArray( products ) ? products : this.getProducts();
@@ -97,6 +240,39 @@ class CartPage
 			product.stock = [ stock ];
 		}
 
+		if( product.stock.length === 0 )
+		{
+			let qtyInput = i.querySelector('input[name="quantityBox"]');
+			if( qtyInput )
+			{
+				let aint = parseInt( qtyInput.value );
+
+				if( !isNaN( aint ) && aint > 25 )
+				{
+					let stock	= {
+						qty	: aint
+						,date	: this.productUtils.getDate()
+						,time	: this.productUtils.getTime()
+						,asin	: product.asin
+					};
+
+					if( 'seller' in product )
+					{
+						stock.seller		= product.sellers[0];
+						stock.seller_url	= seller.getAttribute('href');
+					}
+
+					if( params.has( 'smid' ) )
+					{
+						stock.seller_id		= params.get('smid');
+					}
+
+					product.stock = [ stock ];
+				}
+			}
+		}
+
+
 		let qtyStr 	= this.amazonParser.getValueSelector(i,'.sc-product-scarcity');
 
 		if( qtyStr && /^Only (\d+) left in stock/.test( qtyStr ) )
@@ -147,6 +323,7 @@ class CartPage
 				product.stock = [ stock ];
 			}
 		}
+
 
 		if( product.stock.length )
 		{
@@ -201,8 +378,13 @@ class CartPage
 		return product;
 	}
 
-	getItemsSelector()
+	getItemsSelector( asin )
 	{
+		if( asin )
+		{
+			return '.sc-list-body[data-name="Active Items"] div[data-asin="'+asin+'"]:not([data-removed="true"])';
+		}
+
 		return '.sc-list-body[data-name="Active Items"] div[data-asin]:not([data-removed="true"])';
 	}
 
@@ -210,13 +392,82 @@ class CartPage
 	{
 		let form = document.querySelector('#activeCartViewForm');
 
-		let itemsNodeList = form.querySelectorAll( this.getItemsSelector() );
+		let itemsNodeList = form.querySelectorAll( this.getItemsSelector( null ) );
 		let items	= Array.from( itemsNodeList );
 		let productsArray	= [];
 
 		items.forEach((i)=> productsArray.push( this.parseProductItem( i ) ) );
 
 		return productsArray;
+	}
+
+	parseItemProcess( asin )
+	{
+		let div = this.getCartItemByAsin( asin );
+
+		return PromiseUtils.tryNTimes(()=>
+		{
+			let z = div.querySelector('[data-action="a-dropdown-button"]');
+
+			if( z )
+				z.click();
+
+			let dropdown = div.querySelector('span.a-dropdown-prompt');
+
+			return dropdown === null ? false : dropdown;
+		},500,15)
+		.then(( dropdown )=>
+		{
+			return PromiseUtils.tryNTimes(()=>
+			{
+				dropdown.click();
+				let popup = document.querySelector('div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
+
+				return popup === null ? false : popup;
+
+			},600, 15 );
+		})
+		.then(( popup )=>
+		{
+			return PromiseUtils.tryNTimes(()=>
+			{
+				popup.click();
+
+				let input = div.querySelector('input[name="quantityBox"][aria-label="Quantity"]');
+				return input === null ? false : input;
+			},350,14);
+		})
+		.then((input)=>
+		{
+			return PromiseUtils.tryNTimes(()=>
+			{
+				input.value = 999;
+				let inputEvent = new Event('input',
+				{
+					"bubbles"	   : true
+					,"cancelable"   : false
+					,"composed"	 : false
+				});
+
+				input.dispatchEvent( inputEvent );
+
+				let updateButton = div.querySelector('a[data-action="update"]');
+				return updateButton === null ? false : updateButton;
+			},500,10);
+		})
+		.then((updateButton)=>
+		{
+			updateButton.click();
+			return PromiseUtils.tryNTimes(()=>
+			{
+				let asin = div.getAttribute('data-asin');
+				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
+				let it = this.parseProductItem( nDiv );
+
+				return it.stock.length > 0 ? it : false;
+
+			},350,14);
+		});
 	}
 
 	/*
@@ -226,7 +477,7 @@ class CartPage
 	{
 		let form = document.querySelector('#activeCartViewForm');
 
-		let itemsNodeList = form.querySelectorAll( this.getItemsSelector() );
+		let itemsNodeList = form.querySelectorAll( this.getItemsSelector( null ) );
 		let items	= Array.from( itemsNodeList );
 
 		let generator = (div, index)=>

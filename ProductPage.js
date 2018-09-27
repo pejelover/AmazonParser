@@ -129,15 +129,30 @@ class ProductPage
 				button.click();
 				return true;
 			}
+			else
+			{
+				//button = document.querySelector('#toggleBuyBox #add-to-cart-button');
+				//if( button )
+				//{
+				//	button.click();
+				//	return true;
+				//}
+			}
 
 			return false;
 		};
 
-		PromiseUtils.tryNTimes(fun,200,20)
+		return PromiseUtils.tryNTimes(fun,1000,5)
 			.catch((e)=>
 			{
 				console.log("AddToCartFails PP::atc38");
 			});
+	}
+
+	hasContinueToCartButton()
+	{
+		let z = document.querySelector('#smartShelfAddToCartContinue');
+		return z !== null;
 	}
 
 	getProductFromProductPage()
