@@ -121,32 +121,15 @@ class ProductPage
 	addToCart()
 	{
 		//Test With https://www.amazon.com/dp/B077GDG44V
-		let fun	= ()=>
+		let button	= document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]');
+		if( button )
 		{
-			let button	= document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]');
-			if( button )
-			{
-				button.click();
-				return true;
-			}
-			else
-			{
-				//button = document.querySelector('#toggleBuyBox #add-to-cart-button');
-				//if( button )
-				//{
-				//	button.click();
-				//	return true;
-				//}
-			}
+			button.click();
+			return true;
+		}
 
-			return false;
-		};
+		return false;
 
-		return PromiseUtils.tryNTimes(fun,1000,5)
-			.catch((e)=>
-			{
-				console.log("AddToCartFails PP::atc38");
-			});
 	}
 
 	hasContinueToCartButton()
@@ -961,12 +944,15 @@ class ProductPage
 		for(var i=0;i<a.length;i++)
 		{
 			var href	= a[ i ].getAttribute('href');
+			//href: "https://www.amazon.com/gp/offer-listing/B07FCR2X54/ref=dp_olp_new_mbc?ie=UTF8&condition=new"
+
 			if( href && href.includes('/gp/offer-listing/'+asin) )
 			{
 				//console.log('Clicked');
 				a[ i ].click();
-				return;
+				return true;
 			}
 		}
+		return false;
 	}
 }
