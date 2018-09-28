@@ -130,12 +130,17 @@ class CartPage
 	{
 		let form = document.querySelector('#activeCartViewForm');
 
-		let item	= form.querySelector( this.getItemsSelector( null ) );
+		if( form )
+		{
+			let item	= form.querySelector( this.getItemsSelector( null ) );
 
-		if( item === null )
-			return null;
+			if( item === null )
+				return null;
 
-		return this.parseProductItem( item );
+			return this.parseProductItem( item );
+		}
+
+		return null;
 	}
 
 	getSaveForLaterCount()
@@ -147,7 +152,7 @@ class CartPage
 			if( /Saved for later \(\d+ items?\)/.test( text ) )
 			{
 				let x = text.replace( /\D/g, '');
-				let aint = parseInt( x );
+				let aint = parseInt( x, 10 );
 
 				return isNaN( aint ) ? 0 : aint;
 			}
@@ -245,7 +250,7 @@ class CartPage
 			let qtyInput = i.querySelector('input[name="quantityBox"]');
 			if( qtyInput )
 			{
-				let aint = parseInt( qtyInput.value );
+				let aint = parseInt( qtyInput.value, 10 );
 
 				if( !isNaN( aint ) && aint > 25 )
 				{
