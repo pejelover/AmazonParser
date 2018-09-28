@@ -19,6 +19,11 @@ class CartPage
 		return '#sc-saved-cart [data-asin]';
 	}
 
+	getFirstCartItemAsin()
+	{
+		let div = this.getCartItemByAsin( null );
+		return div === null ? null : div.getAttribute('data-asin');
+	}
 
 	moveToCartSaveForLaterProcess( asin )
 	{
@@ -245,37 +250,6 @@ class CartPage
 			product.stock = [ stock ];
 		}
 
-		if( product.stock.length === 0 )
-		{
-			let qtyInput = i.querySelector('input[name="quantityBox"]');
-			if( qtyInput )
-			{
-				let aint = parseInt( qtyInput.value, 10 );
-
-				if( !isNaN( aint ) && aint > 25 )
-				{
-					let stock	= {
-						qty	: aint
-						,date	: this.productUtils.getDate()
-						,time	: this.productUtils.getTime()
-						,asin	: product.asin
-					};
-
-					if( 'seller' in product )
-					{
-						stock.seller		= product.sellers[0];
-						stock.seller_url	= seller.getAttribute('href');
-					}
-
-					if( params.has( 'smid' ) )
-					{
-						stock.seller_id		= params.get('smid');
-					}
-
-					product.stock = [ stock ];
-				}
-			}
-		}
 
 
 		let qtyStr 	= this.amazonParser.getValueSelector(i,'.sc-product-scarcity');
@@ -305,10 +279,13 @@ class CartPage
 
 		if( product.stock.length == 0 )
 		{
-			if( i.getAttribute('data-quantity') === '999' )
+			let qtyString = i.getAttribute('data-quantity');
+			let qtyInt = parseInt( qtyString, 10 );
+
+			if( !isNaN( qtyInt ) && qtyInt > 20 )
 			{
 				let stock	= {
-					qty	: 999
+					qty	: qtyInt
 					,date	: this.productUtils.getDate()
 					,time	: this.productUtils.getTime()
 					,asin	: product.asin
@@ -408,10 +385,10 @@ class CartPage
 
 	parseItemProcess( asin )
 	{
-		let div = this.getCartItemByAsin( asin );
 
 		return PromiseUtils.tryNTimes(()=>
 		{
+			let div = this.getCartItemByAsin( asin );
 			let z = div.querySelector('[data-action="a-dropdown-button"]');
 
 			if( z )
@@ -437,7 +414,7 @@ class CartPage
 			return PromiseUtils.tryNTimes(()=>
 			{
 				popup.click();
-
+				let div = this.getCartItemByAsin( asin );
 				let input = div.querySelector('input[name="quantityBox"][aria-label="Quantity"]');
 				return input === null ? false : input;
 			},350,14);
@@ -456,6 +433,7 @@ class CartPage
 
 				input.dispatchEvent( inputEvent );
 
+				let div = this.getCartItemByAsin( asin );
 				let updateButton = div.querySelector('a[data-action="update"]');
 				return updateButton === null ? false : updateButton;
 			},500,10);
@@ -465,7 +443,8 @@ class CartPage
 			updateButton.click();
 			return PromiseUtils.tryNTimes(()=>
 			{
-				let asin = div.getAttribute('data-asin');
+				let div = this.getCartItemByAsin( asin );
+				//let asin = div.getAttribute('data-asin');
 				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
 				let it = this.parseProductItem( nDiv );
 
