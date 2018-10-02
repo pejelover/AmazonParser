@@ -10,7 +10,6 @@ class ProductUtils
 	createNewProductObject()
 	{
 		return {
-
 			images	: []
 			,offers	: []
 			,sellers : []
@@ -19,6 +18,7 @@ class ProductUtils
 			,stock	: []
 			,parsed	: this.date.toISOString()
 			,parsedDates:[ this.getDateString( this.date ) ]
+			,is_complete: false
 			,versions	: []
 		};
 	}
@@ -44,17 +44,46 @@ class ProductUtils
 		return dateStr;
 	}
 
-	mergeProducts( op, np, mergeOffersAndStock )
+	isOldProductABetterOptions( op, np)
 	{
-		let isOpOldProduct = true;
+		if( 'is_complete' in op && !('is_complete' in np ) )
+		{
+			return true;
+		}
+
+		if( 'is_complete' in np && !('is_complete' in op ) )
+		{
+			return false;
+		}
 
 		if('parsed' in op && 'parsed' in np && op.parsed > np.parsed )
 		{
-			isOpOldProduct = false;
+			return false;
 		}
 
-		let oldProduct =  isOpOldProduct ? op : np;
-		let newProduct =  isOpOldProduct ? np : op;
+		if( 'is_complete' in op && 'is_complete' in np )
+		{
+			if( op.is_complete && !np.is_complete )
+				return  true;
+
+			if( !op.is_complete && np.is_complete )
+				return false;
+		}
+
+		if('parsed' in op && 'parsed' in np && op.parsed > np.parsed )
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	mergeProducts( op, np, mergeOffersAndStock )
+	{
+		let iopabo = this.isOldProductABetterOption( op, np );
+
+		let oldProduct =  iopabo ? op : np;
+		let newProduct =  iopabo ? np : op;
 
 		let keys = Object.keys( oldProduct );
 
