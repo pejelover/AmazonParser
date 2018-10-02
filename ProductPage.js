@@ -10,8 +10,8 @@ class ProductPage
 	{
 		let p1	= this.getProductFromProductPage();
 		let p2	= this.getProductFromBuyBox();
-
 		let p	= null;
+
 
 		let seller_id	= null;
 
@@ -98,10 +98,6 @@ class ProductPage
 		if( p2 && p2.offers.length )
 			p2.offers[0].is_prime = is_prime;
 
-
-
-
-
 		if( p1 && p2 )
 		{
 			p	= this.productUtils.mergeProducts( p1, p2, true );
@@ -114,6 +110,9 @@ class ProductPage
 		{
 			p	= p2;
 		}
+
+		let params = this.amazonParser.getParameters( window.location.href );
+		p.is_complete = !params.has('m');
 
 		return p;
 	}
