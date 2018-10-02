@@ -44,7 +44,7 @@ class ProductUtils
 		return dateStr;
 	}
 
-	isOldProductABetterOptions( op, np)
+	isOldProductABetterOption( op, np)
 	{
 		if( 'is_complete' in op && !('is_complete' in np ) )
 		{
@@ -70,7 +70,7 @@ class ProductUtils
 				return false;
 		}
 
-		if('parsed' in op && 'parsed' in np && op.parsed > np.parsed )
+		if('parsed' in op && 'parsed' in np && op.parsed < np.parsed )
 		{
 			return false;
 		}
