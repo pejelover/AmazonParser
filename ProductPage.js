@@ -31,12 +31,7 @@ class ProductPage
 			}
 		};
 
-
 		let is_prime = false;
-
-
-
-
 
 		if( p1.stock.length )
 		{
@@ -45,21 +40,18 @@ class ProductPage
 				is_prime = true;
 		}
 
-		if( p2 && p2.stock.length )
+		if( p2 && p2.stock.length && p2.stock[0].is_prime )
 		{
-			if( p2.stock[0].is_prime )
 				is_prime = true;
 		}
 
-		if( p1.offers.length )
+		if( p1.offers.length && p1.offers[0].is_prime )
 		{
-			if( p1.offers[0].is_prime )
 				is_prime = true;
 		}
 
-		if(p2 && p2.offers.length )
+		if(p2 && p2.offers.length && p2.offers[0].is_prime )
 		{
-			if( p2.offers[0].is_prime )
 				is_prime = true;
 		}
 
@@ -84,7 +76,6 @@ class ProductPage
 
 		if( p2 && p2.offers.length && seller_id )
 			setSellerId( p2.offers[0], seller_id );
-
 
 		if( p1.stock.length )
 			p1.stock[0].is_prime = is_prime;
@@ -128,7 +119,6 @@ class ProductPage
 		}
 
 		return false;
-
 	}
 
 	hasContinueToCartButton()
