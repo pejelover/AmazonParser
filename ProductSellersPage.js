@@ -30,13 +30,14 @@ class ProductSellersPage
 
 	addToCartFirstSeller()
 	{
-		try{
-			let divs = document.querySelector('#olpOfferList div[role="row"].olpOffer input[value="Add to cart"]').click();
-		}
-		catch(e)
+		//let divs = document.querySelector('#olpOfferList div[role="row"].olpOffer input[value="Add to cart"]').click();
+		let input = document.querySelector('#olpOfferList div[role="row"].olpOffer input[value="Add to cart"]');
+		if( input )
 		{
-			console.error('SellersPage: Selector to add cart Fails');
+			input.click();
+			return true;
 		}
+		return false;
 	}
 
 	getProduct()

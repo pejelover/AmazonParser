@@ -7,8 +7,11 @@ class AmazonParser
 		this.productSellersPage	= new ProductSellersPage( this, this.productUtils );
 		this.cartPage	= new CartPage( this, this.productUtils );
 		this.prev2cart =  new Prev2Cart( this );
+		this.merchantProductsPage = new MerchantProducts( this );
+
 		this.debug		= false;
 	}
+
 	/*
 		Parses the vendor section of
 	*/
@@ -267,6 +270,14 @@ class AmazonParser
 		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( cleanUrl ) )
 			return 'VENDORS_PAGE';
 
+		if( /https:\/\/wwww.amazon.com\/s/.test( cleanUrl  ) )
+		{
+			let params = this.getParameters( href );
+			if( params.has( 'marketplaceID') && params.has('merchant') )
+			{
+				return 'MERCHANT_PRODUCTS';
+			}
+		}
 
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
 		//
@@ -542,6 +553,53 @@ class AmazonParser
 
 	}
 
+	getAllLinks()
+	{
+		let linkElements = document.querySelector('a');
+		let allLinks = Array.from( linkElements );
+
+		let pLinks = [];
+		allLinks.forEach(( link )=>
+		{
+			let href	= link.getAttribute('href');
+
+			let urlObj	=
+			{
+				url : href
+				,type	: this.getPageType( href )
+			};
+
+			if( /^\//.test( href ) )
+			{
+				href = 'https://www.amazon.com'+href;
+			}
+
+			if( !/^https:\/\/www.amazon.com/.test( href ) )
+			{
+				return;
+			}
+
+			let asin = this.getAsinFromUrl( href );
+
+			if( asin )
+			{
+				urlObj.asin = asin;
+			}
+
+			let parameters = this.getParameters( href );
+
+			if( parameters.has('merchant') )
+			{
+				urlObj.seller_id = parameters.get('merchant');
+			}
+			else if( parameters.has('s') )
+			{
+				urlObj.seller_id = parameters.get('s');
+			}
+
+			pLinks.push( urlObj );
+		});
+	}
 }
 
 
