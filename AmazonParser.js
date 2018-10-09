@@ -246,6 +246,12 @@ class AmazonParser
     	    asin  = url.replace(/\/gp\/aag\/main\/ref=olp_merch_name_\d+\?ie=UTF8&asin=(\w+)&.*/,'$1');
     	}
 
+		if( /^\//.test( asin ) )
+			return null;
+
+		if( /^https/.test( asin ) )
+			return null;
+
 		return asin;
 	}
 
@@ -279,6 +285,12 @@ class AmazonParser
 			}
 		}
 
+		if( /marketplaceID=(\w+)&/.test( cleanUrl ) )
+		{
+			return 'MERCHANT_PRODUCTS';
+		}
+
+
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
 		//
 		if( /^https:\/\/www.amazon.com\/gp\/product\/handle-buy-box\//.test( cleanUrl ) )
@@ -298,11 +310,6 @@ class AmazonParser
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( cleanUrl ) || /\/gp\/item-dispatch\/ref=/.test( cleanUrl ) )
 			return 'CART_PAGE';
-
-		if( /marketplaceID=(\w+)&/.test( cleanUrl ) )
-		{
-			return 'SEARCH_PAGE';
-		}
 
 		return "NO_DETECTED";
 	}
@@ -555,13 +562,15 @@ class AmazonParser
 
 	getAllLinks()
 	{
-		let linkElements = document.querySelector('a');
+		let linkElements = document.querySelectorAll('a');
 		let allLinks = Array.from( linkElements );
 
 		let pLinks = [];
 		allLinks.forEach(( link )=>
 		{
 			let href	= link.getAttribute('href');
+			if( !href )
+				return;
 
 			let urlObj	=
 			{
@@ -599,6 +608,8 @@ class AmazonParser
 
 			pLinks.push( urlObj );
 		});
+
+		return pLinks;
 	}
 }
 

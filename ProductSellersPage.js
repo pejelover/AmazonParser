@@ -134,6 +134,7 @@ class ProductSellersPage
 	{
 		return '#olpOfferListColumn ul.a-pagination>li.a-last>a';
 	}
+
 	hasNextPage()
 	{
 		let nextButton = document.querySelector( this.getNextPageSelector() );
