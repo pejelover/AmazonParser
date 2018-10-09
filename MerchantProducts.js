@@ -140,11 +140,11 @@ class MerchantProducts
 
 	}
 
-	gotoNextPage()
+	goToNextPage()
 	{
 		//pagnNextString
 		//pagnNextLink
-		let a = document.querySelector('a.pagnNextLink');
+		let a = document.querySelector('#pagnNextLink');
 
 		if( a )
 		{
