@@ -28,6 +28,21 @@ class ProductSellersPage
 		return false;
 	}
 
+	addToCartFirstPrime()
+	{
+		let product = this.getProduct();
+	 	for(let i=0;i <product.offers.length;i++)
+		{
+			if( product.offers[ i ].is_prime )
+			{
+				if( this.addToCartBySellerId( product.offers[ i ].seller_id ) )
+					return;
+			}
+		}
+
+		return false;
+	}
+
 	addToCartFirstSeller()
 	{
 		//let divs = document.querySelector('#olpOfferList div[role="row"].olpOffer input[value="Add to cart"]').click();
@@ -130,6 +145,16 @@ class ProductSellersPage
 
 		return product;
 	}
+
+	isFirstPage()
+	{
+		let div = document.querySelector('#olpOfferListColumn ul.pagination');
+		if( div )
+			return false;
+
+		return true;
+	}
+
 	getNextPageSelector()
 	{
 		return '#olpOfferListColumn ul.a-pagination>li.a-last>a';

@@ -94,7 +94,7 @@ class MerchantProducts
 			});
 		}
 
-		let text = cointainer.textContent.replace(/\s+/gm,' ');
+		let text = container.textContent.replace(/\s+/gm,' ');
 
 		if( /only \d+ left in stock/i.test( text ) && seller_id )
 		{
@@ -111,7 +111,7 @@ class MerchantProducts
 
 		if( product.offers.length && product.asin )
 		{
-			productsArray.push( product );
+			//productsArray.push( product );
 		}
 
 		return product;
