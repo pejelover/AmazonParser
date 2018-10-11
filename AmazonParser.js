@@ -337,9 +337,13 @@ class AmazonParser
 		return null;
 	}
 
-	getSearchListSelector()
+	getSearchListSelector( count )
 	{
 		let counter = 15;
+
+		if( count )
+			counter = count;
+
 		return '#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
 	}
 

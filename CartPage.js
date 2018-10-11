@@ -130,6 +130,35 @@ class CartPage
 			x.click();
 	}
 
+	getLastCartItemAsin()
+	{
+        let form = document.querySelector('#activeCartViewForm');
+        let divs = form.querySelectorAll( this.getItemsSelector( null ) );
+
+        if( divs.length  == 0 )
+        {
+            return null;
+        }
+
+        return divs[ divs.length-1 ].getAttribute('data-asin');
+    }
+
+	parseLastItem()
+	{
+		let form = document.querySelector('#activeCartViewForm');
+
+		if( form )
+		{
+			let items	= form.querySelectorAll( this.getItemsSelector( null ) );
+
+			if( items.length === 0 )
+				return null;
+
+			return this.parseProductItem( items[ items.length - 1 ] );
+		}
+
+		return null;
+	}
 
 	parseFirstItem()
 	{
