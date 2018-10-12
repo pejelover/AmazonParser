@@ -93,15 +93,19 @@ class CartPage
 		if( input )
 		{
 			input.click();
-			return;
+			return true;
 		}
 
 		//Send Product to database
 		let x = div.querySelector('span.sc-action-delete>span');
 
 		if( x )
+		{
 			x.click();
+			return true;
+		}
 
+		return false;
 		//waitTillElementReady
 	}
 
@@ -121,13 +125,18 @@ class CartPage
 		if( input )
 		{
 			input.click();
+			return true;
 		}
 
 		//Send Product to database
 		let x = div.querySelector('span.sc-action-delete>span');
 
 		if( x )
+		{
 			x.click();
+			return true;
+		}
+		return false;
 	}
 
 	getLastCartItemAsin()
@@ -393,10 +402,10 @@ class CartPage
 	{
 		if( asin )
 		{
-			return '.sc-list-body[data-name="Active Items"] div[data-asin="'+asin+'"]:not([data-removed="true"])';
+			return '.sc-list-body[data-name="Active Items"] div[data-asin="'+asin+'"]:not([data-removed="true"]),.sc-batches-list-body[data-name="Active Batches"] div[data-asin="'+asin+'"]:not([data-removed="true"])';
 		}
 
-		return '.sc-list-body[data-name="Active Items"] div[data-asin]:not([data-removed="true"])';
+		return '.sc-list-body[data-name="Active Items"] div[data-asin]:not([data-removed="true"]),.sc-batches-list-body[data-name="Active Batches"] div[data-asin]:not([data-removed="true"])';
 	}
 
 	getProducts()
@@ -472,9 +481,10 @@ class CartPage
 			updateButton.click();
 			return PromiseUtils.tryNTimes(()=>
 			{
-				let div = this.getCartItemByAsin( asin );
+				//let div = this.getCartItemByAsin( asin );
 				//let asin = div.getAttribute('data-asin');
-				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
+				let sel = this.getItemsSelector( asin );
+				let nDiv = document.querySelector( sel );
 				let it = this.parseProductItem( nDiv );
 
 				return it.stock.length > 0 ? it : false;
