@@ -24,11 +24,11 @@ class MerchantProducts
 
 		product.title = title.replace(/^\[Sponsored\](.*)$/,'$1');
 
-		let url	= this.cleanPicassoRedirect( a.getAttribute('href') );
+		let url	= this.amazonParser.cleanPicassoRedirect( a.getAttribute('href') );
 		product.url = url;
 
 		let seller_id  = null;
-		let parameters = this.getParameters( url );
+		let parameters = this.amazonParser.getParameters( url );
 
 		if( parameters.has('m') )
 			seller_id = parameters.get('m');
@@ -48,9 +48,9 @@ class MerchantProducts
 		{
 			let key = keys[ j ];
 
-			if( this.getValueSelector( container, key ) == 'by' )
+			if( this.amazonParser.getValueSelector( container, key ) == 'by' )
 			{
-				producer_name = this.getValueSelector( container ,pn_selectors[ key ] );
+				producer_name = this.amazonParser.getValueSelector( container ,pn_selectors[ key ] );
 				break;
 			}
 		}
@@ -77,8 +77,10 @@ class MerchantProducts
 					description = 'Subscribe & Save';
 
 				let offer		= {
+
 					price			: offerElement.textContent.trim()
-					,url			: this.cleanPicassoRedirect( offerElement.parentElement.getAttribute('href') )
+					,asin			: product.asin
+					,url			: this.amazonParser.cleanPicassoRedirect( offerElement.parentElement.getAttribute('href') )
 					,description	: description
 					,date			: this.productUtils.getDate()
 					,time			: this.productUtils.getTime()
@@ -101,8 +103,9 @@ class MerchantProducts
 			let href = container.querySelector('a.s-access-detail-page');
 
 			product.stock.push({
-				qty		: text.replace(/^Only (\d+) left in stock.*/,'$1' )
-				,url	: this.cleanPicassoRedirect( href.getAttribute('href') )
+				asin	: product.asin
+				,qty	: text.replace(/.*Only (\d+) left in stock.*/,'$1' )
+				,url	: this.amazonParser.cleanPicassoRedirect( href.getAttribute('href') )
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 				,seller_id : seller_id
@@ -119,7 +122,7 @@ class MerchantProducts
 
 	parseProductSearchList()
 	{
-		let parameters	= this.getParameters( window.location.search );
+		let parameters	= this.amazonParser.getParameters( window.location.search );
 		let search		= [];
 
 		let s = document.querySelectorAll('#s-results-list-atf li[data-asin]');
