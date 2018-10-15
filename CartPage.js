@@ -435,7 +435,7 @@ class CartPage
 			let dropdown = div.querySelector('span.a-dropdown-prompt');
 
 			return dropdown === null ? false : dropdown;
-		},500,15)
+		},250,18)
 		.then(( dropdown )=>
 		{
 			return PromiseUtils.tryNTimes(()=>
@@ -445,7 +445,7 @@ class CartPage
 
 				return popup === null ? false : popup;
 
-			},600, 15 );
+			},300, 15 );
 		})
 		.then(( popup )=>
 		{
@@ -474,7 +474,7 @@ class CartPage
 				let div = this.getCartItemByAsin( asin );
 				let updateButton = div.querySelector('a[data-action="update"]');
 				return updateButton === null ? false : updateButton;
-			},500,10);
+			},250,12);
 		})
 		.then((updateButton)=>
 		{
