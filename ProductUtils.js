@@ -23,8 +23,6 @@ class ProductUtils
 		};
 	}
 
-
-
 	getDate()
 	{
 		return this.getDateString( this.date );
@@ -33,6 +31,15 @@ class ProductUtils
 	getTime()
 	{
 		return this.date.toISOString();
+	}
+
+	retNumber( s )
+	{
+		if( typeof s === "string" )
+			if( /^\d+$/.test( s ) )
+				return parseInt( s, 10 );
+
+		return s;
 	}
 
 
@@ -288,7 +295,6 @@ class ProductUtils
 
 	getQty( qty )
 	{
-
 		if( qty == null  || qty === undefined )
 			return '';
 
@@ -299,8 +305,8 @@ class ProductUtils
 			return 'Error > 990';
 		}
 
-		let regex_2 = /This seller has only \d+ of these available. To see if more are available from another seller, go to the product detail page./;
-		let regex_2_replace = /This seller has only (\d+) of these available. To see if more are available from another seller, go to the product detail page./;
+		let regex_2 = /This seller has only \d+ of these available/;
+		let regex_2_replace = /^.*This seller has only (\d+) of these available.*/;
 		let regex_3 = /Only \d+ left in stock \(more on the way\)./;
 
 		let regex_3_replace = /Only (\d+) left in stock \(more on the way\)/;
@@ -309,21 +315,28 @@ class ProductUtils
 		{
 			return 0;
 		}
+
 		if( /^\d+$/.test( qty ) )
 		{
-			return qty;
+			if( typeof qty === "number" )
+				return qty;
+
+			return parseInt( qty, 10 );
 		}
+
 		if( /Only \d+ left in stock - order soon./.test( qty ) )
 		{
-			return qty.replace(/.*Only (\d+) left in stock - order soon.*/,'$1');
+			return this.retNumber( qty.replace(/.*Only (\d+) left in stock - order soon.*/,'$1') );
 		}
+
 		if( regex_2.test( qty ) )
 		{
-			return qty.replace( regex_2_replace, '$1' );
+			return this.retNumber( qty.replace( regex_2_replace, '$1' ) );
 		}
+
 		if( regex_3.test( qty ) )
 		{
-			 return qty.replace( regex_3_replace, '$1' );
+			 return this.retNumber( qty.replace( regex_3_replace, '$1' ) );
 		}
 
 		return qty;

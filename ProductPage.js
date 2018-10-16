@@ -366,7 +366,7 @@ class ProductPage
 			let stock	= {
 				date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
-				,qty	: product.left
+				,qty	: this.productUtils.getQty( product.left )
 				,asin	: product.asin
 				,is_prime : is_prime
 			};
@@ -911,7 +911,7 @@ class ProductPage
 				{
 					product.stock = [{
 						seller_id	: seller_id
-						,qty		: qtyText
+						,qty		: this.productUtils.getQty( qtyText )
 						,asin		: product.asin
 						,time		: this.productUtils.getTime()
 					}];

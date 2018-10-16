@@ -15,8 +15,9 @@ class CartPage
 	getSaveForLaterItemsSelector( asin )
 	{
 		if( asin )
-			return '#sc-saved-cart [data-asin="'+asin+'"]';
-		return '#sc-saved-cart [data-asin]';
+			return '#sc-saved-cart [data-asin="'+asin+'"]:not([data-removed="true"])';
+
+    	return '#sc-saved-cart [data-asin]:not([data-removed="true"])';
 	}
 
 	getFirstCartItemAsin()
@@ -268,7 +269,7 @@ class CartPage
 			text		= text.replace(/^This seller has only (\d+) of these available. *$/,'$1');
 
 			let stock	= {
-				qty		: text
+				qty		: this.productUtils.getQty( text )
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 				,asin	: product.asin
