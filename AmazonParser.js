@@ -567,6 +567,46 @@ class AmazonParser
 
 	}
 
+	getUrlObject( url )
+	{
+		let urlObj = {};
+		urlObj.time = this.productUtils.getTime();
+
+		let href = this.cleanPicassoRedirect( url );
+
+		if( href.indexOf('https://') == -1  )
+		{
+			urlObj.url = 'https://www.amazon.com'+url;
+		}
+
+		let params	= this.getParameters( urlObj.url );
+		let asin	= this.getAsinFromUrl( urlObj.url );
+
+		if( asin !== null )
+		{
+			urlObj.asin = asin;
+		}
+
+		urlObj.type	= this.getPageType( href );
+
+		if( params.has('m') )
+		{
+			urlObj.seller_id = params.get('m');
+		}
+		else if( params.has('smid') )
+		{
+			urlObj.seller_id = params.get('smid');
+		}
+		else if( params.has('s') )
+		{
+			urlObj.s  = params.get('s');
+		}
+		else if( params.has('merchant') )
+		{
+			urlObj.merchant = params.get('merchant');
+		}
+	}
+
 	getAllLinks()
 	{
 		let linkElements = document.querySelectorAll('a');
@@ -579,39 +619,7 @@ class AmazonParser
 			if( !href )
 				return;
 
-			let urlObj	=
-			{
-				url : href
-				,type	: this.getPageType( href )
-			};
-
-			if( /^\//.test( href ) )
-			{
-				href = 'https://www.amazon.com'+href;
-			}
-
-			if( !/^https:\/\/www.amazon.com/.test( href ) )
-			{
-				return;
-			}
-
-			let asin = this.getAsinFromUrl( href );
-
-			if( asin )
-			{
-				urlObj.asin = asin;
-			}
-
-			let parameters = this.getParameters( href );
-
-			if( parameters.has('merchant') )
-			{
-				urlObj.seller_id = parameters.get('merchant');
-			}
-			else if( parameters.has('s') )
-			{
-				urlObj.seller_id = parameters.get('s');
-			}
+			let urlObj = this.getUrlObject( href );
 
 			pLinks.push( urlObj );
 		});
