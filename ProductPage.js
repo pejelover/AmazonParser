@@ -925,6 +925,29 @@ class ProductPage
 		return product;
 	}
 
+	followAlternateProductOffers()
+	{
+		let div = document.getElementById('centerCol');
+		if( div )
+		{
+			var a	= div.querySelectorAll('a');
+
+			for(var i=0;i<a.length;i++)
+			{
+				var href	= a[ i ].getAttribute('href');
+				//href: "https://www.amazon.com/gp/offer-listing/B07FCR2X54/ref=dp_olp_new_mbc?ie=UTF8&condition=new"
+
+				if( href && href.includes('/gp/offer-listing/') )
+				{
+					//console.log('Clicked');
+					a[ i ].click();
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	followPageProductOffers()
 	{
 		var asin	= this.amazonParser.getAsinFromUrl( window.location.href );
