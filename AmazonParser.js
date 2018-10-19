@@ -7,8 +7,11 @@ class AmazonParser
 		this.productSellersPage	= new ProductSellersPage( this, this.productUtils );
 		this.cartPage	= new CartPage( this, this.productUtils );
 		this.prev2cart =  new Prev2Cart( this );
+		this.merchantProductsPage = new MerchantProducts( this );
+
 		this.debug		= false;
 	}
+
 	/*
 		Parses the vendor section of
 	*/
@@ -243,6 +246,12 @@ class AmazonParser
     	    asin  = url.replace(/\/gp\/aag\/main\/ref=olp_merch_name_\d+\?ie=UTF8&asin=(\w+)&.*/,'$1');
     	}
 
+		if( /^\//.test( asin ) )
+			return null;
+
+		if( /^https/.test( asin ) )
+			return null;
+
 		return asin;
 	}
 
@@ -261,11 +270,27 @@ class AmazonParser
 				cleanUrl = cleanUrl.replace(/\/+/g,'/');
 		}
 
+
+
 		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( cleanUrl ) )
 			return 'PREVIOUS_TO_CART_PAGE';
 
 		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( cleanUrl ) )
 			return 'VENDORS_PAGE';
+
+		if( /https:\/\/wwww.amazon.com\/s/.test( cleanUrl  ) )
+		{
+			let params = this.getParameters( href );
+			if( params.has( 'marketplaceID') && params.has('merchant') )
+			{
+				return 'MERCHANT_PRODUCTS';
+			}
+		}
+
+		if( /marketplaceID=(\w+)&/.test( cleanUrl ) || /\/s\?/.test( href ) )
+		{
+			return 'MERCHANT_PRODUCTS';
+		}
 
 
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
@@ -276,22 +301,22 @@ class AmazonParser
 		}
 
 		//https://www.amazon.com/Chosen-Foods-Propellant-Free-Pressure-High-Heat/dp/B01NBHW921/ref=sr_1_3_a_it?s=office-products&ie=UTF8&qid=1533084933&sr=8-3&keywords=Choosen%2BFoods&th=1
-		if( /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
+		if( /^\/gp\/product\/w+/.test( cleanUrl ) || /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
 			(/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( cleanUrl ) && !( /amazon\.com\/gp\/product\/handle-buy-box/.test( cleanUrl ) ) ) )
 			return 'PRODUCT_PAGE';
 
 		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
 		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
-		if( /&field-keywords=\w+/.test( cleanUrl ) || /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
+
+
+		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl )
+			|| /^https:\/\/www.amazon.com\/s\//.test( cleanUrl )
+			|| /&field-keywords=\w+/.test( cleanUrl )
+			|| /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
 			return 'SEARCH_PAGE';
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( cleanUrl ) || /\/gp\/item-dispatch\/ref=/.test( cleanUrl ) )
 			return 'CART_PAGE';
-
-		if( /marketplaceID=(\w+)&/.test( cleanUrl ) )
-		{
-			return 'SEARCH_PAGE';
-		}
 
 		return "NO_DETECTED";
 	}
@@ -318,9 +343,13 @@ class AmazonParser
 		return null;
 	}
 
-	getSearchListSelector()
+	getSearchListSelector( count )
 	{
 		let counter = 15;
+
+		if( count )
+			counter = count;
+
 		return '#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
 	}
 
@@ -542,6 +571,65 @@ class AmazonParser
 
 	}
 
+	getUrlObject( url )
+	{
+		let urlObj = {};
+		urlObj.time = this.productUtils.getTime();
+
+		let href = this.cleanPicassoRedirect( url );
+
+		if( href.indexOf('https://') == -1  )
+		{
+			urlObj.url = 'https://www.amazon.com'+url;
+		}
+
+		let params	= this.getParameters( urlObj.url );
+		let asin	= this.getAsinFromUrl( urlObj.url );
+
+		if( asin !== null )
+		{
+			urlObj.asin = asin;
+		}
+
+		urlObj.type	= this.getPageType( href );
+
+		if( params.has('m') )
+		{
+			urlObj.seller_id = params.get('m');
+		}
+		else if( params.has('smid') )
+		{
+			urlObj.seller_id = params.get('smid');
+		}
+		else if( params.has('s') )
+		{
+			urlObj.s  = params.get('s');
+		}
+		else if( params.has('merchant') )
+		{
+			urlObj.merchant = params.get('merchant');
+		}
+	}
+
+	getAllLinks()
+	{
+		let linkElements = document.querySelectorAll('a');
+		let allLinks = Array.from( linkElements );
+
+		let pLinks = [];
+		allLinks.forEach(( link )=>
+		{
+			let href	= link.getAttribute('href');
+			if( !href )
+				return;
+
+			let urlObj = this.getUrlObject( href );
+
+			pLinks.push( urlObj );
+		});
+
+		return pLinks;
+	}
 }
 
 

@@ -15,8 +15,9 @@ class CartPage
 	getSaveForLaterItemsSelector( asin )
 	{
 		if( asin )
-			return '#sc-saved-cart [data-asin="'+asin+'"]';
-		return '#sc-saved-cart [data-asin]';
+			return '#sc-saved-cart [data-asin="'+asin+'"]:not([data-removed="true"])';
+
+    	return '#sc-saved-cart [data-asin]:not([data-removed="true"])';
 	}
 
 	getFirstCartItemAsin()
@@ -93,15 +94,19 @@ class CartPage
 		if( input )
 		{
 			input.click();
-			return;
+			return true;
 		}
 
 		//Send Product to database
 		let x = div.querySelector('span.sc-action-delete>span');
 
 		if( x )
+		{
 			x.click();
+			return true;
+		}
 
+		return false;
 		//waitTillElementReady
 	}
 
@@ -121,15 +126,49 @@ class CartPage
 		if( input )
 		{
 			input.click();
+			return true;
 		}
 
 		//Send Product to database
 		let x = div.querySelector('span.sc-action-delete>span');
 
 		if( x )
+		{
 			x.click();
+			return true;
+		}
+		return false;
 	}
 
+	getLastCartItemAsin()
+	{
+        let form = document.querySelector('#activeCartViewForm');
+        let divs = form.querySelectorAll( this.getItemsSelector( null ) );
+
+        if( divs.length  == 0 )
+        {
+            return null;
+        }
+
+        return divs[ divs.length-1 ].getAttribute('data-asin');
+    }
+
+	parseLastItem()
+	{
+		let form = document.querySelector('#activeCartViewForm');
+
+		if( form )
+		{
+			let items	= form.querySelectorAll( this.getItemsSelector( null ) );
+
+			if( items.length === 0 )
+				return null;
+
+			return this.parseProductItem( items[ items.length - 1 ] );
+		}
+
+		return null;
+	}
 
 	parseFirstItem()
 	{
@@ -230,7 +269,7 @@ class CartPage
 			text		= text.replace(/^This seller has only (\d+) of these available. *$/,'$1');
 
 			let stock	= {
-				qty		: text
+				qty		: this.productUtils.getQty( text )
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 				,asin	: product.asin
@@ -364,10 +403,10 @@ class CartPage
 	{
 		if( asin )
 		{
-			return '.sc-list-body[data-name="Active Items"] div[data-asin="'+asin+'"]:not([data-removed="true"])';
+			return '.sc-list-body[data-name="Active Items"] div[data-asin="'+asin+'"]:not([data-removed="true"]),.sc-batches-list-body[data-name="Active Batches"] div[data-asin="'+asin+'"]:not([data-removed="true"])';
 		}
 
-		return '.sc-list-body[data-name="Active Items"] div[data-asin]:not([data-removed="true"])';
+		return '.sc-list-body[data-name="Active Items"] div[data-asin]:not([data-removed="true"]),.sc-batches-list-body[data-name="Active Batches"] div[data-asin]:not([data-removed="true"])';
 	}
 
 	getProducts()
@@ -397,7 +436,7 @@ class CartPage
 			let dropdown = div.querySelector('span.a-dropdown-prompt');
 
 			return dropdown === null ? false : dropdown;
-		},500,15)
+		},250,18)
 		.then(( dropdown )=>
 		{
 			return PromiseUtils.tryNTimes(()=>
@@ -407,7 +446,7 @@ class CartPage
 
 				return popup === null ? false : popup;
 
-			},600, 15 );
+			},300, 15 );
 		})
 		.then(( popup )=>
 		{
@@ -436,190 +475,22 @@ class CartPage
 				let div = this.getCartItemByAsin( asin );
 				let updateButton = div.querySelector('a[data-action="update"]');
 				return updateButton === null ? false : updateButton;
-			},500,10);
+			},250,12);
 		})
 		.then((updateButton)=>
 		{
 			updateButton.click();
 			return PromiseUtils.tryNTimes(()=>
 			{
-				let div = this.getCartItemByAsin( asin );
+				//let div = this.getCartItemByAsin( asin );
 				//let asin = div.getAttribute('data-asin');
-				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
+				let sel = this.getItemsSelector( asin );
+				let nDiv = document.querySelector( sel );
 				let it = this.parseProductItem( nDiv );
 
 				return it.stock.length > 0 ? it : false;
 
 			},350,14);
 		});
-	}
-
-	/*
-	 * requires a client from extension-framework/
-	 */
-	parseAllTheStock( client )
-	{
-		let form = document.querySelector('#activeCartViewForm');
-
-		let itemsNodeList = form.querySelectorAll( this.getItemsSelector( null ) );
-		let items	= Array.from( itemsNodeList );
-
-		let generator = (div, index)=>
-		{
-			//let z = i.querySelector('select[name="quantity"].a-native-dropdown');
-
-			div.setAttribute("style","background-color: #ddddff");
-
-			let product = this.parseProductItem( div );
-
-			if( product.stock.length )
-			{
-				client.executeOnBackground('StockFound', product.stock );
-
-				return Promise.resolve( product )
-				.then((p)=>
-				{
-					let input = div.querySelector('span.sc-action-delete>span input');
-
-					if( input )
-					{
-						input.click();
-						return PromiseUtils.resolveAfter( p, 700 );
-					}
-
-					//Send Product to database
-					let x = div.querySelector('span.sc-action-delete>span');
-
-					if( x )
-						x.click();
-
-					return PromiseUtils.resolveAfter( p, 700 );
-				});
-			}
-
-			//The select Button  with label +1
-			let z = div.querySelector('[data-action="a-dropdown-button"]');
-
-			if( z )
-				z.click();
-
-			//Wait to show dropdown "select"
-			return client.waitTillElementReady(div,'span.a-dropdown-prompt')
-			.then(()=>
-			{
-				return PromiseUtils.resolveAfter( 1, 500 );
-			})
-			.then(()=>
-			{
-				//CLick on the dropdown
-				let x = div.querySelector('span.a-dropdown-prompt');
-                x.click();
-
-				return client.waitTillReady( 'div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
-			})
-			.then(()=>
-			{
-				return PromiseUtils.resolveAfter( 1, 1000 );
-			})
-			.then(()=>
-			{
-				//Wait select  button with label 10+
-				let x = document.querySelector('div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
-				if( x )
-					x.click();
-
-
-				//Wait for the input to appear
-                return client.waitTillElementReady(div,'input[name="quantityBox"][aria-label="Quantity"]',false);
-			})
-			.then(()=>
-			{
-				//Changin the quantity of the input to 999
-				let input = div.querySelector('input[name="quantityBox"][aria-label="Quantity"]');
-
-				if( input )
-				{
-					input.value = 999;
-					let inputEvent = new Event('input',
-					{
-						"bubbles"	   : true
-						,"cancelable"   : false
-						,"composed"	 : false
-					});
-
-					input.dispatchEvent( inputEvent );
-				}
-				//Wait to the update button to update the qty input
-				return client.waitTillElementReady(div,'a[data-action="update"]',false);
-			})
-			.then(()=>
-			{
-				//Click on the update button
-				let a =  div.querySelector('a[data-action="update"]');
-
-				if( a == null  )
-				{
-					return Promise.reject('A button to update not found');
-				}
-
-				a.click();
-
-				return PromiseUtils.tryNTimes(()=>
-				{
-					let asin = div.getAttribute('data-asin');
-					let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+asin+'"]');
-					let it = this.parseProductItem( nDiv );
-
-					if( it.stock.length )
-						client.executeOnBackground('StockFound', it.stock );
-
-					return it.stock.length > 0 ? it : false;
-
-				},350,14).catch((eee)=>
-				{
-					return Promise.reject('It fails to get the message '+('msg' in eee ? eee['msg']: eee ) );
-				});
-			})
-			.then(( product1 )=>
-			{
-				//console.log( product1 );
-
-				if( product1 )
-					client.executeOnBackground('StockFound', product1.stock );
-
-				let nDiv = document.querySelector('.sc-list-body[data-name="Active Items"]>div[data-asin="'+product1.asin +'"]');
-				product = this.parseProductItem( nDiv );
-				//console.log( product );
-
-				if( product.stock.length )
-				{
-					let input = nDiv.querySelector('span.sc-action-delete>span input');
-					if( input )
-					{
-						input.click();
-						return PromiseUtils.resolveAfter( product, 700 );
-					}
-
-
-					//Sen
-					let x = nDiv.querySelector('span.sc-action-delete>span');
-					x.click();
-
-					return PromiseUtils.resolveAfter( product, 700 );
-				}
-				else
-				{
-					nDiv.setAttribute('style','background-color:red');
-					return Promise.resolve( null );
-				}
-			})
-			.catch((perror)=>
-			{
-				console.log(perror );
-				return Promise.resolve( null );
-			});
-		};
-
-		return PromiseUtils.runSequential( items, generator );
 	}
 }

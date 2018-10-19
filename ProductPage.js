@@ -366,7 +366,7 @@ class ProductPage
 			let stock	= {
 				date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
-				,qty	: product.left
+				,qty	: this.productUtils.getQty( product.left )
 				,asin	: product.asin
 				,is_prime : is_prime
 			};
@@ -911,7 +911,7 @@ class ProductPage
 				{
 					product.stock = [{
 						seller_id	: seller_id
-						,qty		: qtyText
+						,qty		: this.productUtils.getQty( qtyText )
 						,asin		: product.asin
 						,time		: this.productUtils.getTime()
 					}];
@@ -921,8 +921,63 @@ class ProductPage
 
 			product.offers	= [ offer ];
 		}
+		else
+		{
+			let buyBox = document.querySelector('#buybox');
+
+			if( buyBox )
+			{
+				product	= this.productUtils.createNewProductObject();
+				product.asin	= this.amazonParser.getAsinFromUrl( window.location.href );
+
+				let isOut = buyBox.querySelector('#outOfStock');
+
+				if( isOut )
+				{
+					let merchantID = buyBox.querySelector('input[name="merchantID"]');
+
+					if( merchantID )
+					{
+						let seller_id = merchantID.value;
+
+						if( seller_id )
+						{
+							product.stock.push({
+								asin: product.asin
+								,seller_id: seller_id
+								,time	: this.productUtils.getTime()
+								,qty	: 0
+							});
+						}
+					}
+				}
+			}
+		}
 
 		return product;
+	}
+
+	followAlternateProductOffers()
+	{
+		let div = document.getElementById('centerCol');
+		if( div )
+		{
+			var a	= div.querySelectorAll('a');
+
+			for(var i=0;i<a.length;i++)
+			{
+				var href	= a[ i ].getAttribute('href');
+				//href: "https://www.amazon.com/gp/offer-listing/B07FCR2X54/ref=dp_olp_new_mbc?ie=UTF8&condition=new"
+
+				if( href && href.includes('/gp/offer-listing/') )
+				{
+					//console.log('Clicked');
+					a[ i ].click();
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	followPageProductOffers()
