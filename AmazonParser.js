@@ -308,7 +308,11 @@ class AmazonParser
 		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
 		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
 
-		if( /^https:\/\/www.amazon.com\/s\//.test( cleanUrl ) || /&field-keywords=\w+/.test( cleanUrl ) || /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
+
+		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl )
+			|| /^https:\/\/www.amazon.com\/s\//.test( cleanUrl )
+			|| /&field-keywords=\w+/.test( cleanUrl )
+			|| /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
 			return 'SEARCH_PAGE';
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( cleanUrl ) || /\/gp\/item-dispatch\/ref=/.test( cleanUrl ) )

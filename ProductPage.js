@@ -921,6 +921,38 @@ class ProductPage
 
 			product.offers	= [ offer ];
 		}
+		else
+		{
+			let buyBox = document.querySelector('#buybox');
+
+			if( buyBox )
+			{
+				product	= this.productUtils.createNewProductObject();
+				product.asin	= this.amazonParser.getAsinFromUrl( window.location.href );
+
+				let isOut = buyBox.querySelector('#outOfStock');
+
+				if( isOut )
+				{
+					let merchantID = buyBox.querySelector('input[name="merchantID"]');
+
+					if( merchantID )
+					{
+						let seller_id = merchantID.value;
+
+						if( seller_id )
+						{
+							product.stock.push({
+								asin: product.asin
+								,seller_id: seller_id
+								,time	: this.productUtils.getTime()
+								,qty	: 0
+							});
+						}
+					}
+				}
+			}
+		}
 
 		return product;
 	}
