@@ -258,6 +258,7 @@ class AmazonParser
 	getPageType( href )
 	{
 		let cleanUrl  = this.cleanPicassoRedirect( href );
+
 		if( cleanUrl.indexOf('http') == 0 )
 		{
 			if( cleanUrl.indexOf('https') == 0  )
@@ -581,6 +582,10 @@ class AmazonParser
 		if( href.indexOf('https://') == -1  )
 		{
 			urlObj.url = 'https://www.amazon.com'+url;
+		}
+		else
+		{
+			urlObj.url = href;
 		}
 
 		let params	= this.getParameters( urlObj.url );
