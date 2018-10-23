@@ -257,8 +257,8 @@ class ProductPage
 		let prime	= document.querySelector('#priceblock_ourprice_row i.a-icon.a-icon-prime');
 
 
-        if( prime )
-        	is_prime  = true;
+		if( prime )
+			is_prime  = true;
 
 		prime = document.querySelector('#price-shipping-message i.a-icon-prime');
 
@@ -936,19 +936,31 @@ class ProductPage
 				{
 					let merchantID = buyBox.querySelector('input[name="merchantID"]');
 
+					let seller_id = null;
+
 					if( merchantID )
 					{
-						let seller_id = merchantID.value;
+						seller_id = merchantID.value;
+					}
 
-						if( seller_id )
+					if( !seller_id )
+					{
+						let params = this.getParameters( window.location.href );
+
+						if( params.has('m') )
 						{
-							product.stock.push({
-								asin: product.asin
-								,seller_id: seller_id
-								,time	: this.productUtils.getTime()
-								,qty	: 0
-							});
+							seller_id = params.get('m');
 						}
+					}
+
+					if( seller_id )
+					{
+						product.stock.push({
+							asin: product.asin
+							,seller_id: seller_id
+							,time	: this.productUtils.getTime()
+							,qty	: 0
+						});
 					}
 				}
 			}
