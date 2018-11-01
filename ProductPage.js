@@ -110,8 +110,10 @@ class ProductPage
 
 	addToCart()
 	{
+		let clasicButton = '#desktop_buybox input[type="submit"][value="Add to Cart"]';
+		let withContinueButton = '#desktop_buybox #add-to-cart-button';
 		//Test With https://www.amazon.com/dp/B077GDG44V
-		let button	= document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]');
+		let button	= document.querySelector( clasicButton+','+withContinueButton );
 		if( button )
 		{
 			button.click();
@@ -123,7 +125,7 @@ class ProductPage
 
 	hasContinueToCartButton()
 	{
-		let z = document.querySelector('#smartShelfAddToCartContinue');
+		let z = document.querySelector('#smartShelfAddToCartContinue,#attach-view-cart-button-form');
 		return z !== null;
 	}
 

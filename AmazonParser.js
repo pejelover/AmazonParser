@@ -578,9 +578,13 @@ class AmazonParser
 
 		let href = this.cleanPicassoRedirect( url );
 
-		if( href.indexOf('https://') == -1  )
+		if( href.indexOf('http') === 0 )
 		{
-			urlObj.url = 'https://www.amazon.com'+url;
+			urlObj.url = href;
+		}
+		else
+		{
+			urlObj.url = 'https://www.amazon.com'+href;
 		}
 
 		let params	= this.getParameters( urlObj.url );
@@ -591,7 +595,7 @@ class AmazonParser
 			urlObj.asin = asin;
 		}
 
-		urlObj.type	= this.getPageType( href );
+		urlObj.type	= this.getPageType( urlObj.url );
 
 		if( params.has('m') )
 		{
@@ -609,6 +613,7 @@ class AmazonParser
 		{
 			urlObj.merchant = params.get('merchant');
 		}
+		return urlObj;
 	}
 
 	getAllLinks()
@@ -620,12 +625,13 @@ class AmazonParser
 		allLinks.forEach(( link )=>
 		{
 			let href	= link.getAttribute('href');
-			if( !href )
+
+			if(  href === null || href === "" || href.indexOf('javascript:') === 0 )
 				return;
 
 			let urlObj = this.getUrlObject( href );
-
-			pLinks.push( urlObj );
+			if( urlObj.url.indexOf('amazon.com') !== -1 )
+				pLinks.push( urlObj );
 		});
 
 		return pLinks;
