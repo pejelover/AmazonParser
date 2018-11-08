@@ -134,6 +134,13 @@ class ProductPage
 			return true;
 		}
 
+		let rareButton = document.querySelector('#buybox input[name="submit.add-to-cart"]');
+		if( rareButton )
+		{
+			rareButton.click();
+			return true;
+		}
+
 		return false;
 	}
 
