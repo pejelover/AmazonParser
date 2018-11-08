@@ -108,6 +108,20 @@ class ProductPage
 		return p;
 	}
 
+	enableAddToCart()
+	{
+		let oneOption = document.querySelector('#onetimeOption');
+		if( oneOption )
+		{
+			let button = oneOption.querySelector('input[value="onetime"]');
+			if( button )
+				button.click();
+			return true;
+		}
+
+		return false;
+	}
+
 	addToCart()
 	{
 		let clasicButton = '#desktop_buybox input[type="submit"][value="Add to Cart"]';
