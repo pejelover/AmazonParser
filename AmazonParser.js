@@ -224,11 +224,17 @@ class AmazonParser
 	{
 		let url = a === undefined ? window.location.href : a ;
 
-		var asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
+		let asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
 
 		if( asin.includes('https://' ) )
 		{
 			asin = url.replace(/^.*\/gp\/offer-listing\/(\w+)\/?.*/,'$1');
+		}
+
+
+		if( asin.includes('https://' ) )
+		{
+			asin	= url.replace(/.*\/d\/(\w+)(:?\/|\?).*/,'$1');
 		}
 
 		if( asin.includes('https://') )
