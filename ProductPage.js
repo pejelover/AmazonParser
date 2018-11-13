@@ -644,6 +644,7 @@ class ProductPage
 			///^-?\d*(\.\d+)?$/
 			product.rating	= prating.getAttribute('title').trim().replace(/(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
 			//		 prating.getAttribute('title').trim().replace(/.*(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
+
 			version(product,'rating',1, product.rating );
 		}
 
@@ -676,7 +677,7 @@ class ProductPage
 		if( typeof product.number_of_ratings !== 'undefined' )
 		{
 			if( product.number_of_ratings	=== 'Be the first to review this product' || product.number_of_ratings.includes('Be the first to review this item') )
-				product.number_of_ratings	= '0';
+				product.number_of_ratings	= 0;
 		}
 
 		//if( typeof product.productDetails['Average Customer Review:'] )
