@@ -36,7 +36,7 @@ class ProductSellersPage
 			if( product.offers[ i ].is_prime )
 			{
 				if( this.addToCartBySellerId( product.offers[ i ].seller_id ) )
-					return;
+					return true;
 			}
 		}
 
@@ -169,6 +169,11 @@ class ProductSellersPage
 	goToNextPage()
 	{
 		let nextButton = document.querySelector( this.getNextPageSelector() );
-		nextButton.click();
+		if( nextButton )
+		{
+			nextButton.click();
+			return true;
+		}
+		return false;
 	}
 }
