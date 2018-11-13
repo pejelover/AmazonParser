@@ -218,8 +218,6 @@ class AmazonParser
 		};
 	}
 
-
-
 	//https://www.amazon.com/Jumbo-Stickers-Modern-Silver-Designs/dp/B01N65F5YT?keywords=christmas+tags&qid=1540428467&sr=8-68&ref=sr_1_68
 	getCeoFriendlyLink(url)
 	{
@@ -229,11 +227,11 @@ class AmazonParser
 		{
 			ceoFriendlyUrl = url.replace(/^(?:https:\/\/www.amazon.com)?\/d(?:\/(?:[a-zA-Z-])+)(\/([a-zA-Z-])+).*/,'$1' );
 		}
-		else if( /(?:https:\/\/www.amazon.com)?(\/.*)\/dp\/(:?\w+)(:?\/|\?)?.*/ )
+		else if( /(?:https:\/\/www.amazon.com)?(\/.*)\/dp\/(:?\w+)(:?\/|\?)?.*/.test( url ) )
 		{
 			ceoFriendlyUrl = url.replace(/(?:https:\/\/www.amazon.com)?(.*)\/dp\/(\w+)(:?\/|\?)?.*/,'$1' );
 		}
-		else if( url.test( /^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)?\/product-reviews\// ) )
+		else if(  /^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)?\/product-reviews\//.test( url )  )
 		{
 			//Product Reviews
 			ceoFriendlyUrl = url.replace(/^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)\/product-reviews\/.*/,'$1' );
