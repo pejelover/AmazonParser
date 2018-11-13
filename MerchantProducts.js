@@ -112,11 +112,6 @@ class MerchantProducts
 			});
 		}
 
-		if( product.offers.length && product.asin )
-		{
-			//productsArray.push( product );
-		}
-
 		return product;
 	}
 
