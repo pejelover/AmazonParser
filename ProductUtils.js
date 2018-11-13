@@ -85,7 +85,7 @@ class ProductUtils
 		return true;
 	}
 
-	mergeProducts( op, np, mergeOffersAndStock )
+	mergeProducts( op, np )
 	{
 		let iopabo = this.isOldProductABetterOption( op, np );
 
@@ -101,7 +101,7 @@ class ProductUtils
 			,'search'		:true
 			,'sellers'		:true
 			,'parsedDates'	:true
-			,'seller_ids'	:true
+			,'seller_ids'	:false
 		};
 
 		keys.forEach((k)=>
@@ -125,172 +125,12 @@ class ProductUtils
 			newProduct[ k ] = oldProduct[ k ];
 		});
 
-		if( mergeOffersAndStock )
-		{
-
-			if( !('stock' in newProduct) )
-				newProduct.stock = [];
-
-			if( !('stock' in oldProduct) )
-				oldProduct.stock = [];
-
-
-
-			let pKGenerator = (stock)=>
-			{
-				let k = "";
-
-				if( 'time' in stock )
-				{
-					k+="_"+stock.time.substring(0,15);
-				}
-
-				if( 'qty' in stock )
-					k = stock.qty;
-
-				if( "seller_id" in stock )
-					k+="_"+stock.seller_id;
-
-				return k;
-			};
-
-
-			let sK = {};
-
-			let joiner = ( stock )=>
-			{
-				let  k = pKGenerator( stock );
-				sK[ k ] = stock;
-			};
-
-			oldProduct.stock.forEach( joiner );
-			newProduct.stock.forEach( joiner );
-
-			newProduct.stock = Object.values( sK );
-
-			if( !( 'offers' in newProduct ) )
-				newProduct.offers = [];
-
-			if( !('offers' in oldProduct)  )
-				oldProduct.offers = [];
-
-
-			let offerGenerator = (offer)=>
-			{
-				let k = '';
-				if( 'time' in offer )
-				{
-					k += offer.time.substring(0,13);
-				}
-				if( 'seller_id' in offer && offer.seller_id )
-				{
-					k+= offer.seller_id;
-				}
-				if( 'price' in offer )
-					k+= offer.price;
-
-				return k;
-			};
-
-			let offersKeys = {};
-
-			let offersJoiner = (offer)=>
-			{
-				let k = offerGenerator( offer );
-				offersKeys[ k ] = offer;
-			};
-
-			oldProduct.offers.forEach( offersJoiner );
-			newProduct.offers.forEach( offersJoiner );
-			newProduct.offers = Object.values( offersKeys );
-		}
-
 		return newProduct;
 	}
 
 	cleanProductNormalize( product )
 	{
-		if( !('seller_ids' in product)  )
-			product.seller_ids = [];
 
-		//if( 'offers' in product )
-		//{
-		//	if( !('sellers' in product ) )
-		//	{
-		//		product.sellers = [];
-		//	}
-
-
-		//	product.offers.forEach((offer )=>
-		//	{
-		//		if( 'add2CarSelector' in offer )
-		//		{
-		//			delete offer.add2CarSelector;
-		//		}
-
-		//		if( 'seller' in offer )
-		//		{
-		//			product.sellers.push( offer.seller.toLowerCase() );
-		//		}
-		//		if( 'seller_id' in offer )
-		//		{
-		//			product.seller_ids.push( offer.seller_id );
-		//		}
-		//	});
-		//}
-
-		if( 'rating' in product && /Be the first to review this item/.test( product.rating ) )
-		{
-			product.rating	 = 5;
-			product.number_of_ratings = 0;
-		}
-
-		if( 'seller_ids' in product )
-		{
-			let kSellers = {};
-			product.seller_ids.forEach(i=>kSellers[i]=1);
-			product.seller_ids = Object.keys( kSellers );
-		}
-
-		if( 'sellers' in product )
-		{
-			let kSellers = {};
-			product.sellers.forEach(i=>kSellers[i]=1);
-			product.sellers = Object.keys( kSellers );
-		}
-
-		if( 'qids' in product )
-		{
-			delete product.qids;
-		}
-
-		if( 'offers' in product )
-			delete product.offers;
-
-		if( 'time' in product )
-		{
-			if( 'parsed' in product )
-			{
-				product.parsed = product.time;
-				delete product.time;
-			}
-		}
-
-		if( 'dateParsed' in product )
-		{
-			if( !( 'parsed' in product ) )
-			{
-				let x = new Date( product.dateParsed );
-				product.parsed = x.toISOString();
-			}
-
-			delete product.dateParsed;
-		}
-
-		if( 'stock' in product )
-		{
-			delete product.stock;
-		}
 	}
 
 	getQty( qty )
