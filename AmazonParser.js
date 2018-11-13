@@ -220,6 +220,28 @@ class AmazonParser
 
 
 
+	//https://www.amazon.com/Jumbo-Stickers-Modern-Silver-Designs/dp/B01N65F5YT?keywords=christmas+tags&qid=1540428467&sr=8-68&ref=sr_1_68
+	getCeoFriendlyLink(url)
+	{
+		let ceoFriendlyUrl = null;
+
+		if( /(?:https:\/\/www.amazon.com)?\/d(?:\/(?:[a-zA-Z-])+)(\/([a-zA-Z-])+).*/.test( url ) )
+		{
+			ceoFriendlyUrl = url.replace(/^(?:https:\/\/www.amazon.com)?\/d(?:\/(?:[a-zA-Z-])+)(\/([a-zA-Z-])+).*/,'$1' );
+		}
+		else if( /(?:https:\/\/www.amazon.com)?(\/.*)\/dp\/(:?\w+)(:?\/|\?)?.*/ )
+		{
+			ceoFriendlyUrl = url.replace(/(?:https:\/\/www.amazon.com)?(.*)\/dp\/(\w+)(:?\/|\?)?.*/,'$1' );
+		}
+		else if( url.test( /^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)?\/product-reviews\// ) )
+		{
+			//Product Reviews
+			ceoFriendlyUrl = url.replace(/^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)\/product-reviews\/.*/,'$1' );
+		}
+
+		return ceoFriendlyUrl;
+	}
+
 	getAsinFromUrl( a )
 	{
 		let url = a === undefined ? window.location.href : a ;
@@ -242,6 +264,16 @@ class AmazonParser
 			asin = url.replace(/^.*\/gp\/product\/(\w+).*$/,'$1');
 		}
 
+
+
+
+		//For https://amazon.com/d/some-category/ceo-friendly-link/asin{some weird shit}?some=get&vars=for-traking
+
+		if( /^(?:https:\/\/www.amazon.com)?.*\/d(?:\/(?:\w+-?)+){2}\/(\w+)(:?\/|\?).*/.test( asin ) )
+		{
+			asin = url.replace(/.*\/d(?:\/(?:\w+-?)+){2}\/(\w+)(:?\/|\?).*/,'$1');
+		}
+
 		if( asin.includes('https://') )
 		{
 			asin = url.replace(/.*\/dp\/(\w+)$/,'$1');
@@ -255,7 +287,7 @@ class AmazonParser
 		if( /^\//.test( asin ) )
 			return null;
 
-		if( /^https/.test( asin ) )
+		if( /^http/.test( asin ) )
 			return null;
 
 		return asin;
@@ -264,6 +296,7 @@ class AmazonParser
 	getPageType( href )
 	{
 		let cleanUrl  = this.cleanPicassoRedirect( href );
+
 		if( cleanUrl.indexOf('http') == 0 )
 		{
 			if( cleanUrl.indexOf('https') == 0  )
@@ -298,6 +331,27 @@ class AmazonParser
 			return 'MERCHANT_PRODUCTS';
 		}
 
+		if( /\/slp\//.test( cleanUrl ) )
+		{
+			//Top Selected Products and reviews page
+			return 'TOP_SELECTED_PRODUCTS';
+		}
+
+		if( /\/b\//.test( cleanUrl ) )
+		{
+			return 'FEATURED_CATEGORIES';
+		}
+
+		//Test with
+		//https://www.amazon.com/some-seo-friendly-words/product-reviews/asinnumber/
+		//https://www.amazon.com/product-reviews/asinnumber/ref=dp_csx_sw_rev__img?showViewpoints=1
+		//product-reviews/asinnumber/ref=dp_csx_sw_rev__img?showViewpoints=1
+		///some-seo-friendly-words/product-reviews/asinnumber/
+		//
+		if( /^(?:https:\/\/www.amazon.com)?(\/(\w+-?)+)?\/product-reviews\//.test( cleanUrl ) )
+		{
+			return 'PRODUCT_REVIEWS';
+		}
 
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
 		//
@@ -305,6 +359,13 @@ class AmazonParser
 		{
 			return 'HANDLE_BUY_BOX';
 		}
+
+
+		if( /https:\/\/www.amazon.com\/d\//.test( cleanUrl ) ||  /^\/d\//.test( cleanUrl ) )
+		{
+			return 'PRODUCT_PAGE';
+		}
+
 
 		//https://www.amazon.com/Chosen-Foods-Propellant-Free-Pressure-High-Heat/dp/B01NBHW921/ref=sr_1_3_a_it?s=office-products&ie=UTF8&qid=1533084933&sr=8-3&keywords=Choosen%2BFoods&th=1
 		if( /^\/gp\/product\/w+/.test( cleanUrl ) || /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
@@ -315,11 +376,11 @@ class AmazonParser
 		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
 
 
-		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl )
-			|| /^https:\/\/www.amazon.com\/s\//.test( cleanUrl )
-			|| /&field-keywords=\w+/.test( cleanUrl )
-			|| /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
-			return 'SEARCH_PAGE';
+		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl ) ||
+			/^https:\/\/www.amazon.com\/s\//.test( cleanUrl ) ||
+			/&field-keywords=\w+/.test( cleanUrl ) ||
+			/\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
+				return 'SEARCH_PAGE';
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( cleanUrl ) || /\/gp\/item-dispatch\/ref=/.test( cleanUrl ) )
 			return 'CART_PAGE';
@@ -539,8 +600,9 @@ class AmazonParser
 	{
 		if( href.indexOf('/picassoRedirect.html' ) == -1 )
 		{
-			return href;
+			return href.replace(/#customerReviews$/,'');
 		}
+
 		let start = href.indexOf('https%3A%2F%2F');
 		let end   =href.indexOf('&qualifier');
 
