@@ -354,32 +354,27 @@ class ProductPage
 
 		if( typeof product.left	=== 'undefined' || product.left	=== '' )
 		{
-			let availability	= document.getElementById('availabilityInsideBuyBox_feature_div');
-
-			if( availability )
+			let textContainer	= document.querySelector('#availability');
+			if( textContainer )
 			{
-				let textContainer	= availability.querySelector('#availability');
-				if( textContainer )
+				let text	= textContainer.textContent.trim();
+
+				if( /only \d+ left in stock/i.test( text ) )
 				{
-					let text	= textContainer.textContent.trim();
+					product.left	= text;
+					version( product ,'left', 6, product.left);
+				}
 
-					if( /only \d+ left in stock/i.test( text ) )
-					{
-						product.left	= text;
-						version( product ,'left', 6, product.left);
-					}
+				if( /Currently unavailable./i.test( text ) )
+				{
+					product.left	= 'Currently unavailable.';
+					version( product ,'left', 7, product.left);
+				}
 
-					if( /Currently unavailable./i.test( text ) )
-					{
-						product.left	= 'Currently unavailable.';
-						version( product ,'left', 7, product.left);
-					}
-
-					if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
-					{
-						product.left	= text;
-						version( product ,'left', 8, product.left);
-					}
+				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
+				{
+					product.left	= text;
+					version( product ,'left', 8, product.left);
 				}
 			}
 		}

@@ -346,7 +346,7 @@ class AmazonParser
 		//product-reviews/asinnumber/ref=dp_csx_sw_rev__img?showViewpoints=1
 		///some-seo-friendly-words/product-reviews/asinnumber/
 		//
-		if( /^(?:https:\/\/www.amazon.com)?(\/(\w+-?)+)?\/product-reviews\//.test( cleanUrl ) )
+		if( /^(?:https:\/\/www.amazon.com)?(?:\/[a-zA-Z-]+)?\/product-reviews\//.test( cleanUrl ) )
 		{
 			return 'PRODUCT_REVIEWS';
 		}

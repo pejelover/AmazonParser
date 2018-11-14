@@ -85,7 +85,7 @@ class ProductUtils
 		return true;
 	}
 
-	mergeProducts( op, np )
+	mergeProducts( op, np, mergeOffersAndStock )
 	{
 		let iopabo = this.isOldProductABetterOption( op, np );
 
