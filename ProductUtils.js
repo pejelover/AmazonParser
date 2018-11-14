@@ -125,6 +125,85 @@ class ProductUtils
 			newProduct[ k ] = oldProduct[ k ];
 		});
 
+		if( mergeOffersAndStock )
+		{
+
+			if( !('stock' in newProduct) )
+				newProduct.stock = [];
+
+			if( !('stock' in oldProduct) )
+				oldProduct.stock = [];
+
+
+
+			let pKGenerator = (stock)=>
+			{
+				let k = "";
+
+				if( 'time' in stock )
+				{
+					k+="_"+stock.time.substring(0,15);
+				}
+
+				if( 'qty' in stock )
+					k = stock.qty;
+
+				if( "seller_id" in stock )
+					k+="_"+stock.seller_id;
+
+				return k;
+			};
+
+
+			let sK = {};
+
+			let joiner = ( stock )=>
+			{
+				let  k = pKGenerator( stock );
+				sK[ k ] = stock;
+			};
+
+			oldProduct.stock.forEach( joiner );
+			newProduct.stock.forEach( joiner );
+
+			newProduct.stock = Object.values( sK );
+
+			if( !( 'offers' in newProduct ) )
+				newProduct.offers = [];
+
+			if( !('offers' in oldProduct)  )
+				oldProduct.offers = [];
+
+			let offerGenerator = (offer)=>
+			{
+				let k = '';
+				if( 'time' in offer )
+				{
+					k += offer.time.substring(0,13);
+				}
+				if( 'seller_id' in offer && offer.seller_id )
+				{
+					k+= offer.seller_id;
+				}
+				if( 'price' in offer )
+					k+= offer.price;
+
+				return k;
+			};
+
+			let offersKeys = {};
+
+			let offersJoiner = (offer)=>
+			{
+				let k = offerGenerator( offer );
+				offersKeys[ k ] = offer;
+			};
+
+			oldProduct.offers.forEach( offersJoiner );
+			newProduct.offers.forEach( offersJoiner );
+			newProduct.offers = Object.values( offersKeys );
+		}
+
 		return newProduct;
 	}
 
