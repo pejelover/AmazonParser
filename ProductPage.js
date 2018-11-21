@@ -419,7 +419,11 @@ class ProductPage
 		}
 
 		var sale	= document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
-		let offer	= {};
+
+		let offer	= {
+			asin	: product.asin
+		};
+
 		if( seller_name )
 			offer.seller	= seller_name;
 
@@ -771,6 +775,7 @@ class ProductPage
 		variations.forEach((i)=>
 		{
 
+			if
 			let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
 
 			let partialUrl	= i.getAttribute('data-dp-url');
