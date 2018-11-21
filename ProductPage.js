@@ -773,7 +773,7 @@ class ProductPage
 			let partialUrl	= i.getAttribute('data-dp-url');
 
 			if( partialUrl )
-				urls.push( 'https://amazon.com/'+partialUrl );
+				urls.push( 'https://www.amazon.com/'+partialUrl );
 		});
 
 		return urls;
@@ -792,7 +792,7 @@ class ProductPage
 			{
 				//XXXX FIX THIS
 				//var asin 	= li.getAttribute('data-defaultasin');
-				var url		= 'https://amazon.com'+li.getAttribute('data-dp-url');
+				var url		= 'https://www.amazon.com'+li.getAttribute('data-dp-url');
 				variations.push( url );
 			});
 		}

@@ -244,7 +244,7 @@ class AmazonParser
 	{
 		let url = a === undefined ? window.location.href : a ;
 
-		let asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
+		let asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?)?.*/,'$1');
 
 		if( asin.includes('https://' ) )
 		{
@@ -267,9 +267,9 @@ class AmazonParser
 
 		//For https://amazon.com/d/some-category/ceo-friendly-link/asin{some weird shit}?some=get&vars=for-traking
 
-		if( /^(?:https:\/\/www.amazon.com)?.*\/d(?:\/(?:\w+-?)+){2}\/(\w+)(:?\/|\?).*/.test( asin ) )
+		if( /^(?:https:\/\/www.amazon.com)?.*\/d(?:\/(?:[a-zA-Z-])+){2}\/(\w+)(:?\/|\?).*/.test( asin ) )
 		{
-			asin = url.replace(/.*\/d(?:\/(?:\w+-?)+){2}\/(\w+)(:?\/|\?).*/,'$1');
+			asin = url.replace(/.*\/d(?:\/(?:[a-zA-Z-])+){2}\/(\w+)(:?\/|\?).*/,'$1');
 		}
 
 		if( asin.includes('https://') )
