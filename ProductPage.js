@@ -774,8 +774,6 @@ class ProductPage
 		let urls	= [];
 		variations.forEach((i)=>
 		{
-
-			if
 			let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
 
 			let partialUrl	= i.getAttribute('data-dp-url');
