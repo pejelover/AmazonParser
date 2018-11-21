@@ -770,10 +770,13 @@ class ProductPage
 		let urls	= [];
 		variations.forEach((i)=>
 		{
+
+			let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
+
 			let partialUrl	= i.getAttribute('data-dp-url');
 
 			if( partialUrl )
-				urls.push( 'https://www.amazon.com/'+partialUrl );
+				urls.push( 'https://www.amazon.com/'+colink+partialUrl );
 		});
 
 		return urls;
@@ -792,7 +795,10 @@ class ProductPage
 			{
 				//XXXX FIX THIS
 				//var asin 	= li.getAttribute('data-defaultasin');
-				var url		= 'https://www.amazon.com'+li.getAttribute('data-dp-url');
+
+				let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
+
+				var url		= 'https://www.amazon.com/'+colink+li.getAttribute('data-dp-url');
 				variations.push( url );
 			});
 		}
