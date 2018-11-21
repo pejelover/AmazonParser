@@ -776,7 +776,7 @@ class ProductPage
 			let partialUrl	= i.getAttribute('data-dp-url');
 
 			if( partialUrl )
-				urls.push( 'https://www.amazon.com/'+colink+partialUrl );
+				urls.push( 'https://www.amazon.com'+colink+partialUrl );
 		});
 
 		return urls;
@@ -798,7 +798,7 @@ class ProductPage
 
 				let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
 
-				var url		= 'https://www.amazon.com/'+colink+li.getAttribute('data-dp-url');
+				var url		= 'https://www.amazon.com'+colink+li.getAttribute('data-dp-url');
 				variations.push( url );
 			});
 		}
