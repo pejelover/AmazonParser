@@ -371,6 +371,7 @@ class CartPage
 				price	: price
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
+				,asin	: product.asin
 			};
 
 			if( fullfilled_by )
