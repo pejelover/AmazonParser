@@ -920,6 +920,7 @@ class ProductPage
 			let offer	= {
 				rsid			: this.amazonParser.getValueSelector( box, 'input[name="rsid"]')
 				,price			: this.amazonParser.getValueSelector( box, '#price_inside_buybox' )
+				,asin			: product.asin
 				,seller_id		: seller_id
 				,shipping		: this.amazonParser.getValueSelector( box, '#price-shipping-message')
 				,seller_name	: seller_name
