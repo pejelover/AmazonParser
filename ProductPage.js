@@ -285,11 +285,21 @@ class ProductPage
 
 		prime = document.querySelector('#price-shipping-message i.a-icon-prime');
 
+
 		if( prime )
 		{
 			is_prime	= true;
 		}
 
+		prime = document.querySelector('#merchant-info');
+
+		if( prime )
+		{
+			let txt = prime.textContent.trim();
+
+			if( /Sold by .+ and Fulfilled by Amazon/.test( txt ) )
+				is_prime = true;
+		}
 
 
 		if( seller_name )
@@ -982,6 +992,7 @@ class ProductPage
 				}
 			}
 		}
+
 
 		return product;
 	}
