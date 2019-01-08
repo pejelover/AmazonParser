@@ -308,6 +308,7 @@ class AmazonParser
 		}
 
 
+		if( ://www.amazon.com/Persons-Person-believe-Nursery-Classroom/dp/B01N3YM8V4/?m=A2QEXK5D1DTE8G/
 
 		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( cleanUrl ) )
 			return 'PREVIOUS_TO_CART_PAGE';
@@ -340,6 +341,11 @@ class AmazonParser
 			return 'FEATURED_CATEGORIES';
 		}
 
+		if( cleanUrl == 'https://www.amazon.com/amazon-custom/cart-handler/addToCart/GuildCustomization' )
+		{
+			return 'HAND_MADE_ERROR';
+		}
+
 		//Test with
 		//https://www.amazon.com/some-seo-friendly-words/product-reviews/asinnumber/
 		//https://www.amazon.com/product-reviews/asinnumber/ref=dp_csx_sw_rev__img?showViewpoints=1
@@ -350,6 +356,8 @@ class AmazonParser
 		{
 			return 'PRODUCT_REVIEWS';
 		}
+
+		if(
 
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
 		//
