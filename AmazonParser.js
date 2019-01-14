@@ -307,9 +307,6 @@ class AmazonParser
 				cleanUrl = cleanUrl.replace(/\/+/g,'/');
 		}
 
-
-		if( ://www.amazon.com/Persons-Person-believe-Nursery-Classroom/dp/B01N3YM8V4/?m=A2QEXK5D1DTE8G/
-
 		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( cleanUrl ) )
 			return 'PREVIOUS_TO_CART_PAGE';
 
@@ -341,7 +338,7 @@ class AmazonParser
 			return 'FEATURED_CATEGORIES';
 		}
 
-		if( cleanUrl == 'https://www.amazon.com/amazon-custom/cart-handler/addToCart/GuildCustomization' )
+		if( /amazon-custom\/cart-handler\/addToCart\/GuildCustomization/.test( cleanUrl ) )
 		{
 			return 'HAND_MADE_ERROR';
 		}
@@ -357,7 +354,6 @@ class AmazonParser
 			return 'PRODUCT_REVIEWS';
 		}
 
-		if(
 
 		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
 		//
