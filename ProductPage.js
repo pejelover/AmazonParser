@@ -870,7 +870,7 @@ class ProductPage
 
 
 			let prime = box.querySelector('#shippingMessageInsideBuyBox_feature_div i.a-prime-icon');
-			let is_prime = true;
+			let is_prime = false;
 
 			if( prime )
 				is_prime = true;
@@ -897,7 +897,7 @@ class ProductPage
 				,seller_name	: seller_name
 				,fullfilled_by	: fullfilled_by
 				,time			: this.productUtils.getTime()
-				,is_prime		: true
+				,is_prime		: is_prime
 			};
 
 			let availability = box.querySelector('#availability');
