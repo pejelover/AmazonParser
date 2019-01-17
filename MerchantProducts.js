@@ -1,4 +1,4 @@
-class MerchantProducts
+export default class MerchantProducts
 {
 	constructor( amazonParser )
 	{

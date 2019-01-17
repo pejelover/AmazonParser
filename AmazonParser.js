@@ -1,4 +1,12 @@
-class AmazonParser
+import ProductUtils from './ProductUtils.js';
+import ProductPage from './ProductPage.js';
+import ProductSellersPage from './ProductSellersPage.js';
+import CartPage from  './CartPage.js';
+import Prev2Cart from './Prev2Cart.js';
+import MerchantProducts from './MerchantProducts.js';
+
+
+default export class AmazonParser
 {
 	constructor(options)
 	{
@@ -706,17 +714,5 @@ class AmazonParser
 
 		return pLinks;
 	}
-}
-
-
-try{
-	if( typeof module !== "undefined" && module.exports )
-	{
-		module.exports = AmazonParser;
-	}
-}
-catch(e){
-
-
 }
 

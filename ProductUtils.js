@@ -1,4 +1,4 @@
-class ProductUtils
+export default class ProductUtils
 {
 	constructor( options )
 	{

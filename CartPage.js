@@ -1,4 +1,4 @@
-class CartPage
+export default class CartPage
 {
 	constructor(amazonParser, productUtils )
 	{

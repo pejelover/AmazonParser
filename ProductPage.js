@@ -1,4 +1,4 @@
-class ProductPage
+export default class ProductPage
 {
 	constructor(amazonParser, productUtils )
 	{
