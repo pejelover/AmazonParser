@@ -908,7 +908,7 @@ export default class ProductPage
 
 
 			let prime = box.querySelector('#shippingMessageInsideBuyBox_feature_div i.a-prime-icon');
-			let is_prime = true;
+			let is_prime = false;
 
 			if( prime )
 				is_prime = true;
@@ -936,7 +936,7 @@ export default class ProductPage
 				,seller_name	: seller_name
 				,fullfilled_by	: fullfilled_by
 				,time			: this.productUtils.getTime()
-				,is_prime		: true
+				,is_prime		: is_prime
 			};
 
 			let availability = box.querySelector('#availability');
@@ -975,24 +975,35 @@ export default class ProductPage
 				{
 					let merchantID = buyBox.querySelector('input[name="merchantID"]');
 
+					let seller_id = null;
+
 					if( merchantID )
 					{
-						let seller_id = merchantID.value;
+						seller_id = merchantID.value;
+					}
 
-						if( seller_id )
+					if( !seller_id )
+					{
+						let params = this.getParameters( window.location.href );
+
+						if( params.has('m') )
 						{
-							product.stock.push({
-								asin: product.asin
-								,seller_id: seller_id
-								,time	: this.productUtils.getTime()
-								,qty	: 0
-							});
+							seller_id = params.get('m');
 						}
+					}
+
+					if( seller_id )
+					{
+						product.stock.push({
+							asin: product.asin
+							,seller_id: seller_id
+							,time	: this.productUtils.getTime()
+							,qty	: 0
+						});
 					}
 				}
 			}
 		}
-
 
 		return product;
 	}

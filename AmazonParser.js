@@ -6,7 +6,9 @@ import Prev2Cart from './Prev2Cart.js';
 import MerchantProducts from './MerchantProducts.js';
 
 
-default export class AmazonParser
+
+
+export default class AmazonParser
 {
 	constructor(options)
 	{
@@ -715,4 +717,3 @@ default export class AmazonParser
 		return pLinks;
 	}
 }
-

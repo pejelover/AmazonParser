@@ -1,3 +1,5 @@
+import PromiseUtils from '../Promise-Utils/PromiseUtils.js';
+
 export default class CartPage
 {
 	constructor(amazonParser, productUtils )
