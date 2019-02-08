@@ -111,7 +111,8 @@ class ProductPage
 	addToCart()
 	{
 		//Test With https://www.amazon.com/dp/B077GDG44V
-		let button	= document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]');
+		let button	= document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"],#buybox input[type="submit"][value="Add to Cart"]');
+
 		if( button )
 		{
 			button.click();
