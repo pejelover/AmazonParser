@@ -212,7 +212,7 @@ export default class ProductUtils
 
 	}
 
-	getQty( qty )
+	getQty( qty, is_strict_search )
 	{
 		if( qty == null  || qty === undefined )
 			return '';
@@ -257,6 +257,9 @@ export default class ProductUtils
 		{
 			 return this.retNumber( qty.replace( regex_3_replace, '$1' ) );
 		}
+
+		if( is_strict_search )
+			return null;
 
 		return qty;
 	}
