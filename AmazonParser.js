@@ -323,20 +323,6 @@ export default class AmazonParser
 		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( cleanUrl ) )
 			return 'VENDORS_PAGE';
 
-		if( /https:\/\/wwww.amazon.com\/s/.test( cleanUrl  ) )
-		{
-			let params = this.getParameters( href );
-			if( params.has( 'marketplaceID') && params.has('merchant') )
-			{
-				return 'MERCHANT_PRODUCTS';
-			}
-		}
-
-		if( /marketplaceID=(\w+)&/.test( cleanUrl ) || /\/s\?/.test( href ) )
-		{
-			return 'MERCHANT_PRODUCTS';
-		}
-
 		if( /\/slp\//.test( cleanUrl ) )
 		{
 			//Top Selected Products and reviews page
@@ -388,6 +374,25 @@ export default class AmazonParser
 		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
 
 
+		if( /https:\/\/wwww.amazon.com\/s/.test( cleanUrl  ) )
+		{
+			let params = this.getParameters( href );
+			if( params.has( 'marketplaceID') && params.has('merchant') )
+			{
+				return 'MERCHANT_PRODUCTS';
+			}
+		}
+
+		if( /marketplaceID=(\w+)&/.test( cleanUrl ) || /\/s\?/.test( href ) )
+		{
+			return 'MERCHANT_PRODUCTS';
+		}
+
+
+
+
+
+
 		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl ) ||
 			/^https:\/\/www.amazon.com\/s\//.test( cleanUrl ) ||
 			/&field-keywords=\w+/.test( cleanUrl ) ||
@@ -429,7 +434,8 @@ export default class AmazonParser
 		if( count )
 			counter = count;
 
-		return '#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
+
+		return '.s-result-list [data-asin][data-cel-widget^="search_result_"]:nth-child('+counter+'),#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
 	}
 
 	parseProductSearchList()
