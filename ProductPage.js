@@ -4,6 +4,7 @@ export default class ProductPage
 	{
 		this.amazonParser	= amazonParser;
 		this.productUtils	= productUtils;
+		this.currently_unavailable_regex = /Currently unavailable/i;
 	}
 
 	getProduct()
@@ -322,7 +323,7 @@ export default class ProductPage
 					version( product ,'left', 1, product.left);
 					break;
 				}
-				if( /Currently unavailable./i.test( plefts[ i ].textContent ) )
+				if( this.currently_unavailable_regex.test( plefts[ i ].textContent ) )
 				{
 					product.left	= 'Currently unavailable.';
 					version( product ,'left', 2, product.left);
@@ -375,7 +376,7 @@ export default class ProductPage
 					version( product ,'left', 6, product.left);
 				}
 
-				if( /Currently unavailable./i.test( text ) )
+				if( this.currently_unavailable_regex.test( text ) )
 				{
 					product.left	= 'Currently unavailable.';
 					version( product ,'left', 7, product.left);
@@ -391,21 +392,31 @@ export default class ProductPage
 
 		if( product.left && product.left != 'In Stock.' && product.left !== 'Available from other sellers' )
 		{
-			let stock	= {
+			product.stock.push
+			({
 				date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 				,qty	: this.productUtils.getQty( product.left )
 				,asin	: product.asin
 				,is_prime : is_prime
-			};
+				,seller : seller_name
+				,seller_id : seller_id
+			});
 
-			if( seller_name )
-				stock.seller	= seller_name;
 
-			if( seller_id )
-				stock.seller_id	= seller_id;
-
-			product.stock.push( stock );
+			if( this.currently_unavailable_regex.test( product.left ) )
+			{
+				product.stock.push
+				({
+					date	: this.productUtils.getDate()
+					,time	: this.productUtils.getTime()
+					,qty	: this.productUtils.getQty( product.left )
+					,asin	: product.asin
+					,seller : seller_name
+					,seller_id : seller_id
+					,is_prime : true
+				});
+			}
 		}
 
 		var choice	= document.querySelectorAll('div.ac-badge-wrapper');
