@@ -154,6 +154,15 @@ export default class ProductPage
 	getProductFromProductPage()
 	{
 		let product 		= this.productUtils.createNewProductObject();
+		let seller_id	= '';
+		let seller_name	= '';
+
+		let params = this.amazonParser.getParameters( window.location.href );
+
+		if( params.has('m') )
+		{
+			seller_id	= params.get('m');
+		}
 
 		this.amazonParser.getSearchTerms( window.location.search ).forEach((term)=>
 		{
@@ -259,8 +268,6 @@ export default class ProductPage
 		}
 
 		let seller	= document.querySelector('#shipsFromSoldBy_feature_div a');
-		let seller_id	= '';
-		let seller_name	= '';
 
 		if( seller && /\/gp\/help\/seller\//.test( seller.getAttribute('href') ) )
 		{
@@ -273,6 +280,8 @@ export default class ProductPage
 				product.seller_ids.push( seller_id );
 			}
 		}
+
+
 
 
 		let is_prime = false;
@@ -843,7 +852,16 @@ export default class ProductPage
 	getProductFromBuyBox()
 	{
 		let product	= null;
-		var box	= document.querySelector('#desktop_buybox');
+		let box	= document.querySelector('#desktop_buybox');
+
+		let seller_id = null;
+
+		let params = this.amazonParser.getParameters( window.location.href );
+
+		if( params.has('m') )
+		{
+			seller_id	= params.get('m');
+		}
 
 		if( box )
 		{
@@ -856,7 +874,6 @@ export default class ProductPage
 
 			let shipFromSoldElement	= document.querySelector('#merchant-info');
 			let seller_name	= null;
-			let seller_id	= null;
 			let fullfilled_by	= null;
 
 			if( /^Ships from and sold by /.test( shipFromSold ) && shipFromSoldElement )
@@ -925,6 +942,9 @@ export default class ProductPage
 				is_prime = true;
 
 			//Currently unavailable.
+			//
+			//
+
 
 
 			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
@@ -934,6 +954,7 @@ export default class ProductPage
 				seller_id		= 'amazon.com';
 				product.sellers.push( 'amazon.com');
 			}
+
 
 			if( !( seller_id ) )
 				this.amazonParser.getValueSelector( box, 'input[name="merchantID"]');
@@ -984,24 +1005,15 @@ export default class ProductPage
 
 				if( isOut )
 				{
-					let merchantID = buyBox.querySelector('input[name="merchantID"]');
 
-					let seller_id = null;
-
-					if( merchantID )
+					if( !seller_id  )
 					{
-						seller_id = merchantID.value;
+						let merchantID = buyBox.querySelector('input[name="merchantID"]');
+
+						if( merchantID )
+							seller_id = merchantID.value;
 					}
 
-					if( !seller_id )
-					{
-						let params = this.getParameters( window.location.href );
-
-						if( params.has('m') )
-						{
-							seller_id = params.get('m');
-						}
-					}
 
 					if( seller_id )
 					{
