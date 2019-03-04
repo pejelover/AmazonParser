@@ -209,6 +209,10 @@ export default class ProductSellersPage
 		return '#olpOfferListColumn ul.a-pagination>li.a-last>a';
 	}
 
+	hasPrevPage()
+	{
+		return false;
+	}
 	hasNextPage()
 	{
 		let nextButton = document.querySelector( this.getNextPageSelector() );
