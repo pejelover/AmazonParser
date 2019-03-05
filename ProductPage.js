@@ -9,6 +9,7 @@ export default class ProductPage
 
 	getProduct()
 	{
+
 		let p1	= this.getProductFromProductPage();
 		let p2	= this.getProductFromBuyBox();
 		let p	= null;
@@ -156,6 +157,11 @@ export default class ProductPage
 		let product 		= this.productUtils.createNewProductObject();
 		let seller_id	= '';
 		let seller_name	= '';
+
+		let canonicalUrl = Util.getFirst('link[rel="canonical"]');
+
+		if( canonicalUrl && canonicalUrl.getAttribute('href') )
+			product.url = canonicalUrl.getAttribute('href');
 
 		let params = this.amazonParser.getParameters( window.location.href );
 
