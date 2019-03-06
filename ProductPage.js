@@ -158,7 +158,7 @@ export default class ProductPage
 		let seller_id	= '';
 		let seller_name	= '';
 
-		let canonicalUrl = Util.getFirst('link[rel="canonical"]');
+		let canonicalUrl = document.querySelector('link[rel="canonical"]');
 
 		if( canonicalUrl && canonicalUrl.getAttribute('href') )
 			product.url = canonicalUrl.getAttribute('href');
