@@ -415,6 +415,8 @@ export default class CartPage
 	getProducts()
 	{
 		let form = document.querySelector('#activeCartViewForm');
+		if( form === null )
+			return [];
 
 		let itemsNodeList = form.querySelectorAll( this.getItemsSelector( null ) );
 		let items	= Array.from( itemsNodeList );
