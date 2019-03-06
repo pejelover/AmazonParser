@@ -160,6 +160,9 @@ export default class ProductPage
 
 		let canonicalUrl = document.querySelector('link[rel="canonical"]');
 
+
+		product.url	= window.location.href;
+
 		if( canonicalUrl && canonicalUrl.getAttribute('href') )
 			product.url = canonicalUrl.getAttribute('href');
 
@@ -183,8 +186,6 @@ export default class ProductPage
 		{
 			version( product, 'ASIN',1 ,product.asin );
 		}
-
-		product.url	= window.location.href;
 
 		version( product,'extracted',1,window.location.href );
 
