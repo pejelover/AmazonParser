@@ -1,4 +1,4 @@
-class ProductSellersPage
+export default class ProductSellersPage
 {
 	constructor(amazonParser, productUtils )
 	{
@@ -6,12 +6,38 @@ class ProductSellersPage
 		this.productUtils = productUtils;
 	}
 
-	addToCartBySellerId( seller_id )
+	addToCartBySellerId( seller_id, is_one_day_shipping, fullfilled_by_vendor, fullfilled_by_amazon )
 	{
 		let searchSeller = seller_id === 'ATVPDKIKX0DER' ? 'amazon.com' : seller_id;
 
 		let product = this.getProduct();
-		let offer	= product.offers.find( offer => 'seller_id' in offer && offer.seller_id == searchSeller );
+
+		let offer	= product.offers.find( (offer) =>{
+
+
+			if( !('seller_id' in offer ) || offer.seller_id != searchSeller )
+			{
+				return false;
+			}
+
+			if( fullfilled_by_vendor && 'fullfilled_by' in offer && offer.fullfilled_by === 'Amazon.com' )
+			{
+				return false;
+			}
+
+			if( fullfilled_by_amazon && ( !('fullfilled_by' in offer ) || offer.fullfilled_by != 'Amazon.com' ) )
+			{
+				return false;
+			}
+
+			if( is_one_day_shipping &&  !('is_one_day' in  offer ) && offer.is_one_day )
+			{
+				return false;
+			}
+
+			return true;
+		});
+
 
 		if( offer !== undefined && 'add2CarSelector' in offer && offer.add2CarSelector )
 		{
@@ -36,7 +62,7 @@ class ProductSellersPage
 			if( product.offers[ i ].is_prime )
 			{
 				if( this.addToCartBySellerId( product.offers[ i ].seller_id ) )
-					return;
+					return true;
 			}
 		}
 
@@ -108,10 +134,33 @@ class ProductSellersPage
 					,add2CarSelector : selector
 				};
 
+				let fullfilled_by_amazon = div.querySelector('.olpFbaPopoverTrigger');
+
+				if( fullfilled_by_amazon )
+				{
+					offer.fullfilled_by = 'Amazon.com';
+				}
+
+				let days = div.querySelector('[id^="shippingMessage_ftinfo_olp_"] b');
+
+				if( days )
+				{
+					let text = days.textContent.trim();
+
+					if( text === 'One-Day Shipping' )
+					{
+						offer.is_one_day = true;
+					}
+					else if( text === 'Two-Day Shipping' )
+					{
+						offer.is_two_day = true;
+					}
+				}
+
 
 				if( /shipped by Amazon/.test( offer.shipping ) )
 				{
-					offer.fullfill_by = 'Amazon.com';
+					offer.fullfilled_by = 'Amazon.com';
 				}
 
 
@@ -160,6 +209,10 @@ class ProductSellersPage
 		return '#olpOfferListColumn ul.a-pagination>li.a-last>a';
 	}
 
+	hasPrevPage()
+	{
+		return false;
+	}
 	hasNextPage()
 	{
 		let nextButton = document.querySelector( this.getNextPageSelector() );
@@ -169,6 +222,11 @@ class ProductSellersPage
 	goToNextPage()
 	{
 		let nextButton = document.querySelector( this.getNextPageSelector() );
-		nextButton.click();
+		if( nextButton )
+		{
+			nextButton.click();
+			return true;
+		}
+		return false;
 	}
 }

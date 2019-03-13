@@ -1,4 +1,4 @@
-class ProductUtils
+export default class ProductUtils
 {
 	constructor( options )
 	{
@@ -101,7 +101,7 @@ class ProductUtils
 			,'search'		:true
 			,'sellers'		:true
 			,'parsedDates'	:true
-			,'seller_ids'	:true
+			,'seller_ids'	:false
 		};
 
 		keys.forEach((k)=>
@@ -174,7 +174,6 @@ class ProductUtils
 			if( !('offers' in oldProduct)  )
 				oldProduct.offers = [];
 
-
 			let offerGenerator = (offer)=>
 			{
 				let k = '';
@@ -210,90 +209,10 @@ class ProductUtils
 
 	cleanProductNormalize( product )
 	{
-		if( !('seller_ids' in product)  )
-			product.seller_ids = [];
 
-		//if( 'offers' in product )
-		//{
-		//	if( !('sellers' in product ) )
-		//	{
-		//		product.sellers = [];
-		//	}
-
-
-		//	product.offers.forEach((offer )=>
-		//	{
-		//		if( 'add2CarSelector' in offer )
-		//		{
-		//			delete offer.add2CarSelector;
-		//		}
-
-		//		if( 'seller' in offer )
-		//		{
-		//			product.sellers.push( offer.seller.toLowerCase() );
-		//		}
-		//		if( 'seller_id' in offer )
-		//		{
-		//			product.seller_ids.push( offer.seller_id );
-		//		}
-		//	});
-		//}
-
-		if( 'rating' in product && /Be the first to review this item/.test( product.rating ) )
-		{
-			product.rating	 = 5;
-			product.number_of_ratings = 0;
-		}
-
-		if( 'seller_ids' in product )
-		{
-			let kSellers = {};
-			product.seller_ids.forEach(i=>kSellers[i]=1);
-			product.seller_ids = Object.keys( kSellers );
-		}
-
-		if( 'sellers' in product )
-		{
-			let kSellers = {};
-			product.sellers.forEach(i=>kSellers[i]=1);
-			product.sellers = Object.keys( kSellers );
-		}
-
-		if( 'qids' in product )
-		{
-			delete product.qids;
-		}
-
-		if( 'offers' in product )
-			delete product.offers;
-
-		if( 'time' in product )
-		{
-			if( 'parsed' in product )
-			{
-				product.parsed = product.time;
-				delete product.time;
-			}
-		}
-
-		if( 'dateParsed' in product )
-		{
-			if( !( 'parsed' in product ) )
-			{
-				let x = new Date( product.dateParsed );
-				product.parsed = x.toISOString();
-			}
-
-			delete product.dateParsed;
-		}
-
-		if( 'stock' in product )
-		{
-			delete product.stock;
-		}
 	}
 
-	getQty( qty )
+	getQty( qty, is_strict_search )
 	{
 		if( qty == null  || qty === undefined )
 			return '';
@@ -338,6 +257,9 @@ class ProductUtils
 		{
 			 return this.retNumber( qty.replace( regex_3_replace, '$1' ) );
 		}
+
+		if( is_strict_search )
+			return null;
 
 		return qty;
 	}

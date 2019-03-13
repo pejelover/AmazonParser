@@ -1,13 +1,15 @@
-class ProductPage
+export default class ProductPage
 {
 	constructor(amazonParser, productUtils )
 	{
 		this.amazonParser	= amazonParser;
 		this.productUtils	= productUtils;
+		this.currently_unavailable_regex = /Currently unavailable/i;
 	}
 
 	getProduct()
 	{
+
 		let p1	= this.getProductFromProductPage();
 		let p2	= this.getProductFromBuyBox();
 		let p	= null;
@@ -108,13 +110,36 @@ class ProductPage
 		return p;
 	}
 
+	enableAddToCart()
+	{
+		let oneOption = document.querySelector('#onetimeOption');
+		if( oneOption )
+		{
+			let button = oneOption.querySelector('input[value="onetime"]');
+			if( button )
+				button.click();
+			return true;
+		}
+
+		return false;
+	}
+
 	addToCart()
 	{
+		let clasicButton = '#desktop_buybox input[type="submit"][value="Add to Cart"]';
+		let withContinueButton = '#desktop_buybox #add-to-cart-button';
 		//Test With https://www.amazon.com/dp/B077GDG44V
-		let button	= document.querySelector('#desktop_buybox input[type="submit"][value="Add to Cart"]');
+		let button	= document.querySelector( clasicButton+','+withContinueButton );
 		if( button )
 		{
 			button.click();
+			return true;
+		}
+
+		let rareButton = document.querySelector('#buybox input[name="submit.add-to-cart"]');
+		if( rareButton )
+		{
+			rareButton.click();
 			return true;
 		}
 
@@ -123,13 +148,30 @@ class ProductPage
 
 	hasContinueToCartButton()
 	{
-		let z = document.querySelector('#smartShelfAddToCartContinue');
+		let z = document.querySelector('#smartShelfAddToCartContinue,#attach-view-cart-button-form');
 		return z !== null;
 	}
 
 	getProductFromProductPage()
 	{
 		let product 		= this.productUtils.createNewProductObject();
+		let seller_id	= '';
+		let seller_name	= '';
+
+		let canonicalUrl = document.querySelector('link[rel="canonical"]');
+
+
+		product.url	= window.location.href;
+
+		if( canonicalUrl && canonicalUrl.getAttribute('href') )
+			product.url = canonicalUrl.getAttribute('href');
+
+		let params = this.amazonParser.getParameters( window.location.href );
+
+		if( params.has('m') )
+		{
+			seller_id	= params.get('m');
+		}
 
 		this.amazonParser.getSearchTerms( window.location.search ).forEach((term)=>
 		{
@@ -144,8 +186,6 @@ class ProductPage
 		{
 			version( product, 'ASIN',1 ,product.asin );
 		}
-
-		product.url	= window.location.href;
 
 		version( product,'extracted',1,window.location.href );
 
@@ -235,8 +275,6 @@ class ProductPage
 		}
 
 		let seller	= document.querySelector('#shipsFromSoldBy_feature_div a');
-		let seller_id	= '';
-		let seller_name	= '';
 
 		if( seller && /\/gp\/help\/seller\//.test( seller.getAttribute('href') ) )
 		{
@@ -251,6 +289,8 @@ class ProductPage
 		}
 
 
+
+
 		let is_prime = false;
 
 
@@ -262,11 +302,21 @@ class ProductPage
 
 		prime = document.querySelector('#price-shipping-message i.a-icon-prime');
 
+
 		if( prime )
 		{
 			is_prime	= true;
 		}
 
+		prime = document.querySelector('#merchant-info');
+
+		if( prime )
+		{
+			let txt = prime.textContent.trim();
+
+			if( /Sold by .+ and Fulfilled by Amazon/.test( txt ) )
+				is_prime = true;
+		}
 
 
 		if( seller_name )
@@ -289,7 +339,7 @@ class ProductPage
 					version( product ,'left', 1, product.left);
 					break;
 				}
-				if( /Currently unavailable./i.test( plefts[ i ].textContent ) )
+				if( this.currently_unavailable_regex.test( plefts[ i ].textContent ) )
 				{
 					product.left	= 'Currently unavailable.';
 					version( product ,'left', 2, product.left);
@@ -331,53 +381,58 @@ class ProductPage
 
 		if( typeof product.left	=== 'undefined' || product.left	=== '' )
 		{
-			let availability	= document.getElementById('availabilityInsideBuyBox_feature_div');
-
-			if( availability )
+			let textContainer	= document.querySelector('#availability');
+			if( textContainer )
 			{
-				let textContainer	= availability.querySelector('#availability');
-				if( textContainer )
+				let text	= textContainer.textContent.trim();
+
+				if( /only \d+ left in stock/i.test( text ) )
 				{
-					let text	= textContainer.textContent.trim();
+					product.left	= text;
+					version( product ,'left', 6, product.left);
+				}
 
-					if( /only \d+ left in stock/i.test( text ) )
-					{
-						product.left	= text;
-						version( product ,'left', 6, product.left);
-					}
+				if( this.currently_unavailable_regex.test( text ) )
+				{
+					product.left	= 'Currently unavailable.';
+					version( product ,'left', 7, product.left);
+				}
 
-					if( /Currently unavailable./i.test( text ) )
-					{
-						product.left	= 'Currently unavailable.';
-						version( product ,'left', 7, product.left);
-					}
-
-					if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
-					{
-						product.left	= text;
-						version( product ,'left', 8, product.left);
-					}
+				if( /in stock on [A-Za-z]+ \d{1,2} 20\d{2}/i.test( text ) )
+				{
+					product.left	= text;
+					version( product ,'left', 8, product.left);
 				}
 			}
 		}
 
 		if( product.left && product.left != 'In Stock.' && product.left !== 'Available from other sellers' )
 		{
-			let stock	= {
+			product.stock.push
+			({
 				date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
 				,qty	: this.productUtils.getQty( product.left )
 				,asin	: product.asin
 				,is_prime : is_prime
-			};
+				,seller : seller_name
+				,seller_id : seller_id
+			});
 
-			if( seller_name )
-				stock.seller	= seller_name;
 
-			if( seller_id )
-				stock.seller_id	= seller_id;
-
-			product.stock.push( stock );
+			if( this.currently_unavailable_regex.test( product.left ) )
+			{
+				product.stock.push
+				({
+					date	: this.productUtils.getDate()
+					,time	: this.productUtils.getTime()
+					,qty	: this.productUtils.getQty( product.left )
+					,asin	: product.asin
+					,seller : seller_name
+					,seller_id : seller_id
+					,is_prime : true
+				});
+			}
 		}
 
 		var choice	= document.querySelectorAll('div.ac-badge-wrapper');
@@ -401,7 +456,11 @@ class ProductPage
 		}
 
 		var sale	= document.getElementById('priceblock_saleprice_row #priceblock_saleprice');
-		let offer	= {};
+
+		let offer	= {
+			asin	: product.asin
+		};
+
 		if( seller_name )
 			offer.seller	= seller_name;
 
@@ -621,6 +680,7 @@ class ProductPage
 			///^-?\d*(\.\d+)?$/
 			product.rating	= prating.getAttribute('title').trim().replace(/(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
 			//		 prating.getAttribute('title').trim().replace(/.*(\d+(\.\d+)?) out of \d+ stars.*/,'$1');
+
 			version(product,'rating',1, product.rating );
 		}
 
@@ -653,7 +713,7 @@ class ProductPage
 		if( typeof product.number_of_ratings !== 'undefined' )
 		{
 			if( product.number_of_ratings	=== 'Be the first to review this product' || product.number_of_ratings.includes('Be the first to review this item') )
-				product.number_of_ratings	= '0';
+				product.number_of_ratings	= 0;
 		}
 
 		//if( typeof product.productDetails['Average Customer Review:'] )
@@ -751,10 +811,12 @@ class ProductPage
 		let urls	= [];
 		variations.forEach((i)=>
 		{
+			let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
+
 			let partialUrl	= i.getAttribute('data-dp-url');
 
 			if( partialUrl )
-				urls.push( 'https://amazon.com/'+partialUrl );
+				urls.push( 'https://www.amazon.com'+colink+partialUrl );
 		});
 
 		return urls;
@@ -773,7 +835,10 @@ class ProductPage
 			{
 				//XXXX FIX THIS
 				//var asin 	= li.getAttribute('data-defaultasin');
-				var url		= 'https://amazon.com'+li.getAttribute('data-dp-url');
+
+				let colink = this.amazonParser.getCeoFriendlyLink( window.location.href );
+
+				var url		= 'https://www.amazon.com'+colink+li.getAttribute('data-dp-url');
 				variations.push( url );
 			});
 		}
@@ -794,7 +859,16 @@ class ProductPage
 	getProductFromBuyBox()
 	{
 		let product	= null;
-		var box	= document.querySelector('#desktop_buybox');
+		let box	= document.querySelector('#desktop_buybox');
+
+		let seller_id = null;
+
+		let params = this.amazonParser.getParameters( window.location.href );
+
+		if( params.has('m') )
+		{
+			seller_id	= params.get('m');
+		}
 
 		if( box )
 		{
@@ -807,7 +881,6 @@ class ProductPage
 
 			let shipFromSoldElement	= document.querySelector('#merchant-info');
 			let seller_name	= null;
-			let seller_id	= null;
 			let fullfilled_by	= null;
 
 			if( /^Ships from and sold by /.test( shipFromSold ) && shipFromSoldElement )
@@ -870,12 +943,15 @@ class ProductPage
 
 
 			let prime = box.querySelector('#shippingMessageInsideBuyBox_feature_div i.a-prime-icon');
-			let is_prime = true;
+			let is_prime = false;
 
 			if( prime )
 				is_prime = true;
 
 			//Currently unavailable.
+			//
+			//
+
 
 
 			if( /ships from and sold by Amazon.com/i.test( shipFromSold ) )
@@ -886,18 +962,20 @@ class ProductPage
 				product.sellers.push( 'amazon.com');
 			}
 
+
 			if( !( seller_id ) )
 				this.amazonParser.getValueSelector( box, 'input[name="merchantID"]');
 
 			let offer	= {
 				rsid			: this.amazonParser.getValueSelector( box, 'input[name="rsid"]')
 				,price			: this.amazonParser.getValueSelector( box, '#price_inside_buybox' )
+				,asin			: product.asin
 				,seller_id		: seller_id
 				,shipping		: this.amazonParser.getValueSelector( box, '#price-shipping-message')
 				,seller_name	: seller_name
 				,fullfilled_by	: fullfilled_by
 				,time			: this.productUtils.getTime()
-				,is_prime		: true
+				,is_prime		: is_prime
 			};
 
 			let availability = box.querySelector('#availability');
@@ -934,24 +1012,15 @@ class ProductPage
 
 				if( isOut )
 				{
-					let merchantID = buyBox.querySelector('input[name="merchantID"]');
 
-					let seller_id = null;
-
-					if( merchantID )
+					if( !seller_id  )
 					{
-						seller_id = merchantID.value;
+						let merchantID = buyBox.querySelector('input[name="merchantID"]');
+
+						if( merchantID )
+							seller_id = merchantID.value;
 					}
 
-					if( !seller_id )
-					{
-						let params = this.getParameters( window.location.href );
-
-						if( params.has('m') )
-						{
-							seller_id = params.get('m');
-						}
-					}
 
 					if( seller_id )
 					{

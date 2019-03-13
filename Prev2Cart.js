@@ -1,4 +1,4 @@
-class Prev2Cart
+export default class Prev2Cart
 {
 
 	constructor( amazonParser )

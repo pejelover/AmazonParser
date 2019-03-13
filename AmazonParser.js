@@ -1,4 +1,14 @@
-class AmazonParser
+import ProductUtils from './ProductUtils.js';
+import ProductPage from './ProductPage.js';
+import ProductSellersPage from './ProductSellersPage.js';
+import CartPage from  './CartPage.js';
+import Prev2Cart from './Prev2Cart.js';
+import MerchantProducts from './MerchantProducts.js';
+
+
+
+
+export default class AmazonParser
 {
 	constructor(options)
 	{
@@ -218,22 +228,58 @@ class AmazonParser
 		};
 	}
 
+	//https://www.amazon.com/Jumbo-Stickers-Modern-Silver-Designs/dp/B01N65F5YT?keywords=christmas+tags&qid=1540428467&sr=8-68&ref=sr_1_68
+	getCeoFriendlyLink(url)
+	{
+		let ceoFriendlyUrl = null;
 
+		if( /(?:https:\/\/www.amazon.com)?\/d(?:\/(?:[a-zA-Z-])+)(\/([a-zA-Z-])+).*/.test( url ) )
+		{
+			ceoFriendlyUrl = url.replace(/^(?:https:\/\/www.amazon.com)?\/d(?:\/(?:[a-zA-Z-])+)(\/([a-zA-Z-])+).*/,'$1' );
+		}
+		else if( /(?:https:\/\/www.amazon.com)?(\/.*)\/dp\/(:?\w+)(:?\/|\?)?.*/.test( url ) )
+		{
+			ceoFriendlyUrl = url.replace(/(?:https:\/\/www.amazon.com)?(.*)\/dp\/(\w+)(:?\/|\?)?.*/,'$1' );
+		}
+		else if(  /^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)?\/product-reviews\//.test( url )  )
+		{
+			//Product Reviews
+			ceoFriendlyUrl = url.replace(/^(?:https:\/\/www.amazon.com)?(\/([a-zA-Z-])+)\/product-reviews\/.*/,'$1' );
+		}
+
+		return ceoFriendlyUrl;
+	}
 
 	getAsinFromUrl( a )
 	{
 		let url = a === undefined ? window.location.href : a ;
 
-		var asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?).*/,'$1');
+		let asin	= url.replace(/.*\/dp\/(\w+)(:?\/|\?)?.*/,'$1');
 
 		if( asin.includes('https://' ) )
 		{
 			asin = url.replace(/^.*\/gp\/offer-listing\/(\w+)\/?.*/,'$1');
 		}
 
+
+		if( asin.includes('https://' ) )
+		{
+			asin	= url.replace(/.*\/d\/(\w+)(:?\/|\?).*/,'$1');
+		}
+
 		if( asin.includes('https://') )
 		{
 			asin = url.replace(/^.*\/gp\/product\/(\w+).*$/,'$1');
+		}
+
+
+
+
+		//For https://amazon.com/d/some-category/ceo-friendly-link/asin{some weird shit}?some=get&vars=for-traking
+
+		if( /^(?:https:\/\/www.amazon.com)?.*\/d(?:\/(?:[a-zA-Z-])+){2}\/(\w+)(:?\/|\?).*/.test( asin ) )
+		{
+			asin = url.replace(/.*\/d(?:\/(?:[a-zA-Z-])+){2}\/(\w+)(:?\/|\?).*/,'$1');
 		}
 
 		if( asin.includes('https://') )
@@ -249,7 +295,7 @@ class AmazonParser
 		if( /^\//.test( asin ) )
 			return null;
 
-		if( /^https/.test( asin ) )
+		if( /^http/.test( asin ) )
 			return null;
 
 		return asin;
@@ -271,13 +317,62 @@ class AmazonParser
 				cleanUrl = cleanUrl.replace(/\/+/g,'/');
 		}
 
-
-
 		if( /\/gp\/huc\/view.html\?.*newItems=.*$/.test( cleanUrl ) )
 			return 'PREVIOUS_TO_CART_PAGE';
 
 		if( /^https:\/\/www.amazon.com\/gp\/offer-listing.*/.test( cleanUrl ) )
 			return 'VENDORS_PAGE';
+
+		if( /\/slp\//.test( cleanUrl ) )
+		{
+			//Top Selected Products and reviews page
+			return 'TOP_SELECTED_PRODUCTS';
+		}
+
+		if( /\/b\//.test( cleanUrl ) )
+		{
+			return 'FEATURED_CATEGORIES';
+		}
+
+		if( /amazon-custom\/cart-handler\/addToCart\/GuildCustomization/.test( cleanUrl ) )
+		{
+			return 'HAND_MADE_ERROR';
+		}
+
+		//Test with
+		//https://www.amazon.com/some-seo-friendly-words/product-reviews/asinnumber/
+		//https://www.amazon.com/product-reviews/asinnumber/ref=dp_csx_sw_rev__img?showViewpoints=1
+		//product-reviews/asinnumber/ref=dp_csx_sw_rev__img?showViewpoints=1
+		///some-seo-friendly-words/product-reviews/asinnumber/
+		//
+		if( /^(?:https:\/\/www.amazon.com)?(?:\/[a-zA-Z-]+)?\/product-reviews\//.test( cleanUrl ) )
+		{
+			return 'PRODUCT_REVIEWS';
+		}
+
+
+		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
+		//
+		if( /^https:\/\/www.amazon.com\/gp\/product\/handle-buy-box\//.test( cleanUrl ) )
+		{
+			return 'HANDLE_BUY_BOX';
+		}
+
+
+		if( /https:\/\/www.amazon.com\/d\//.test( cleanUrl ) ||  /^\/d\//.test( cleanUrl ) )
+		{
+			return 'PRODUCT_PAGE';
+		}
+
+
+		//https://www.amazon.com/Chosen-Foods-Propellant-Free-Pressure-High-Heat/dp/B01NBHW921/ref=sr_1_3_a_it?s=office-products&ie=UTF8&qid=1533084933&sr=8-3&keywords=Choosen%2BFoods&th=1
+		if( /^\/gp\/product\/w+/.test( cleanUrl ) || /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
+			(/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( cleanUrl ) && !( /amazon\.com\/gp\/product\/handle-buy-box/.test( cleanUrl ) ) ) )
+			return 'PRODUCT_PAGE';
+
+		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
+		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
+
 
 		if( /https:\/\/wwww.amazon.com\/s/.test( cleanUrl  ) )
 		{
@@ -294,27 +389,15 @@ class AmazonParser
 		}
 
 
-		// /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/ Works on firefox Fails in Chrome
-		//
-		if( /^https:\/\/www.amazon.com\/gp\/product\/handle-buy-box\//.test( cleanUrl ) )
-		{
-			return 'HANDLE_BUY_BOX';
-		}
-
-		//https://www.amazon.com/Chosen-Foods-Propellant-Free-Pressure-High-Heat/dp/B01NBHW921/ref=sr_1_3_a_it?s=office-products&ie=UTF8&qid=1533084933&sr=8-3&keywords=Choosen%2BFoods&th=1
-		if( /^\/gp\/product\/w+/.test( cleanUrl ) || /^https:\/\/www.amazon.com\/(?:.*)?dp\/(\w+)(?:\?|\/)?.*$/.test( cleanUrl ) ||
-			(/^https:\/\/www.amazon.com\/gp\/product\/(\w+)(?:\?|\/)?.*$.*/.test( cleanUrl ) && !( /amazon\.com\/gp\/product\/handle-buy-box/.test( cleanUrl ) ) ) )
-			return 'PRODUCT_PAGE';
-
-		//https://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps
-		//if( /\/s\/ref=nb_sb_noss_2.url=search-alias.3Daps/.test( href ) )
 
 
-		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl )
-			|| /^https:\/\/www.amazon.com\/s\//.test( cleanUrl )
-			|| /&field-keywords=\w+/.test( cleanUrl )
-			|| /\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
-			return 'SEARCH_PAGE';
+
+
+		if( /^https:\/\/www.amazon.com\/gp\/search/.test( cleanUrl ) ||
+			/^https:\/\/www.amazon.com\/s\//.test( cleanUrl ) ||
+			/&field-keywords=\w+/.test( cleanUrl ) ||
+			/\/s\/ref=sr_pg_\d+\?/.test( cleanUrl ) )
+				return 'SEARCH_PAGE';
 
 		if( /amazon\..*\/gp\/cart\/view.html/.test( cleanUrl ) || /\/gp\/item-dispatch\/ref=/.test( cleanUrl ) )
 			return 'CART_PAGE';
@@ -351,7 +434,8 @@ class AmazonParser
 		if( count )
 			counter = count;
 
-		return '#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
+
+		return '.s-result-list [data-asin][data-cel-widget^="search_result_"]:nth-child('+counter+'),#resultsCol li[data-asin]:nth-child('+counter+'),#s-results-list-atf li[data-asin]:nth-child('+counter+')';
 	}
 
 	parseProductSearchList()
@@ -534,8 +618,9 @@ class AmazonParser
 	{
 		if( href.indexOf('/picassoRedirect.html' ) == -1 )
 		{
-			return href;
+			return href.replace(/#customerReviews$/,'');
 		}
+
 		let start = href.indexOf('https%3A%2F%2F');
 		let end   =href.indexOf('&qualifier');
 
@@ -579,9 +664,13 @@ class AmazonParser
 
 		let href = this.cleanPicassoRedirect( url );
 
-		if( href.indexOf('https://') == -1  )
+		if( href.indexOf('http') === 0 )
 		{
-			urlObj.url = 'https://www.amazon.com'+url;
+			urlObj.url = href;
+		}
+		else
+		{
+			urlObj.url = 'https://www.amazon.com'+href;
 		}
 		else
 		{
@@ -596,7 +685,7 @@ class AmazonParser
 			urlObj.asin = asin;
 		}
 
-		urlObj.type	= this.getPageType( href );
+		urlObj.type	= this.getPageType( urlObj.url );
 
 		if( params.has('m') )
 		{
@@ -614,6 +703,7 @@ class AmazonParser
 		{
 			urlObj.merchant = params.get('merchant');
 		}
+		return urlObj;
 	}
 
 	getAllLinks()
@@ -625,27 +715,15 @@ class AmazonParser
 		allLinks.forEach(( link )=>
 		{
 			let href	= link.getAttribute('href');
-			if( !href )
+
+			if(  href === null || href === "" || href.indexOf('javascript:') === 0 )
 				return;
 
 			let urlObj = this.getUrlObject( href );
-
-			pLinks.push( urlObj );
+			if( urlObj.url.indexOf('amazon.com') !== -1 )
+				pLinks.push( urlObj );
 		});
 
 		return pLinks;
 	}
 }
-
-
-try{
-	if( typeof module !== "undefined" && module.exports )
-	{
-		module.exports = AmazonParser;
-	}
-}
-catch(e){
-
-
-}
-

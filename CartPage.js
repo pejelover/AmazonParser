@@ -1,4 +1,6 @@
-class CartPage
+import PromiseUtils from '../Promise-Utils/PromiseUtils.js';
+
+export default class CartPage
 {
 	constructor(amazonParser, productUtils )
 	{
@@ -371,6 +373,7 @@ class CartPage
 				price	: price
 				,date	: this.productUtils.getDate()
 				,time	: this.productUtils.getTime()
+				,asin	: product.asin
 			};
 
 			if( fullfilled_by )
@@ -412,6 +415,8 @@ class CartPage
 	getProducts()
 	{
 		let form = document.querySelector('#activeCartViewForm');
+		if( form === null )
+			return [];
 
 		let itemsNodeList = form.querySelectorAll( this.getItemsSelector( null ) );
 		let items	= Array.from( itemsNodeList );
