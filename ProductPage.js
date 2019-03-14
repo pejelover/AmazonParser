@@ -4,7 +4,7 @@ export default class ProductPage
 	{
 		this.amazonParser	= amazonParser;
 		this.productUtils	= productUtils;
-		this.currently_unavailable_regex = /Currently unavailable/i;
+		this.currently_unavailable_regex =  /[Currently unavailable|Currently unavailable]/;
 	}
 
 	getProduct()
@@ -406,7 +406,7 @@ export default class ProductPage
 			}
 		}
 
-		if( product.left && product.left != 'In Stock.' && product.left !== 'Available from other sellers' )
+		if( product.left && product.left != 'In Stock.' )
 		{
 			product.stock.push
 			({
