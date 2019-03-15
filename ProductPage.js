@@ -4,7 +4,7 @@ export default class ProductPage
 	{
 		this.amazonParser	= amazonParser;
 		this.productUtils	= productUtils;
-		this.currently_unavailable_regex =  /[Currently unavailable|Currently unavailable]/;
+		this.currently_unavailable_regex =  /Currently unavailable|Available from these sellers/;
 	}
 
 	getProduct()
@@ -339,7 +339,7 @@ export default class ProductPage
 					version( product ,'left', 1, product.left);
 					break;
 				}
-				if( this.currently_unavailable_regex.test( plefts[ i ].textContent ) )
+				if( this.currently_unavailable_regex.test( plefts[ i ].textContent.replace(/\s+/g,' ').trim() ) )
 				{
 					product.left	= 'Currently unavailable.';
 					version( product ,'left', 2, product.left);
@@ -365,7 +365,7 @@ export default class ProductPage
 
 				if( /Available from these sellers./i.test( text ) )
 				{
-					product.left	= 'Available from other sellers';
+					product.left	= 'Available from these sellers.';
 					version( product ,'left', 4, product.left);
 					break;
 				}

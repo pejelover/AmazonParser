@@ -258,6 +258,9 @@ export default class ProductUtils
 			 return this.retNumber( qty.replace( regex_3_replace, '$1' ) );
 		}
 
+		if( /Available from these sellers/.test( qty ) )
+			return 0;
+
 		if( is_strict_search )
 			return null;
 
