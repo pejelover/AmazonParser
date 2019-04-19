@@ -151,6 +151,9 @@ export default class ProductUtils
 				if( "seller_id" in stock )
 					k+="_"+stock.seller_id;
 
+				if( "is_prime" in stock )
+					k+="_"+( stock.is_prime ? "p1" : "p0");
+
 				return k;
 			};
 
