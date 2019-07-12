@@ -101,6 +101,7 @@ export default class ProductUtils
 			,'search'		:true
 			,'sellers'		:true
 			,'parsedDates'	:true
+			,'images'	:true
 			,'seller_ids'	:false
 		};
 
