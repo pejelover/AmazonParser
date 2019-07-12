@@ -288,14 +288,8 @@ export default class ProductPage
 			}
 		}
 
-
-
-
 		let is_prime = false;
-
-
 		let prime	= document.querySelector('#priceblock_ourprice_row i.a-icon.a-icon-prime');
-
 
         if( prime )
         	is_prime  = true;
@@ -628,18 +622,41 @@ export default class ProductPage
 		//Details
 		product.productDetails	= {};
 
+
+
 		var details	= document.querySelectorAll('#productDetailsTable .content li');
 
 		if( details.length )
 		{
 			for(let i=0;i<details.length;i++)
 			{
-				let detail	= details[i].querySelector('b').textContent.trim().replace(/:$/,'');
-				var fullDetail	= details[i].textContent.replace( detail, '');
-				product.productDetails[ detail.trim() ]	= fullDetail.trim();
+				let detail	= '';
+				if( details[i].querySelector('b')  )
+				{
+					detail = details[i].querySelector('b').textContent.trim().replace(/:$/,'');
+					var fullDetail	= details[i].querySelector('b').textContent.replace( detail, '');
+					product.productDetails[ detail.trim() ]	= fullDetail.trim();
+				}
 				//V1
 			}
 			version( product ,'details', 1, '' );
+		}
+
+		details = document.querySelector("#detail-bullets");
+		if( details )
+		{
+			let check = details.querySelector('h2');
+			if(check && check.textContent == 'Product details' )
+			{
+				let values = Array.from( details.querySelectorAll('ul>li') );
+				values.forEach((i)=>
+				{
+					let title = i.querySelector('b');
+					if( !title )
+						return;
+					product.productDetails[ title.textContent.trim().replace(':','') ] = i.textContent.replace(/.*:/,'').trim();
+				});
+			}
 		}
 
 		details	= document.querySelectorAll('#productDetails_detailBullets_sections1 tr');
@@ -724,8 +741,8 @@ export default class ProductPage
 
 		if( imagesElement )
 		{
-			var images	= imagesElement.innerHTML;
-			var data	= images.indexOf('var data	= {');
+			var images	= imagesElement.innerHTML.replace(/[ \t]+/g,' ');
+			var data	= images.indexOf('var data = {');
 			var sub1	= images.substring( data+10 );
 			var data2	= sub1.indexOf('};')+1;
 			var data3	= sub1.substring(0,data2).replace(/'/g,'"');
@@ -869,6 +886,17 @@ export default class ProductPage
 		{
 			seller_id	= params.get('m');
 		}
+		else
+		{
+			let profileLink = document.getElementById('sellerProfileTriggerId');
+			if( profileLink )
+			{
+				let href = sellerProfileTriggerId.getAttribute('href')
+				let parameters = this.amazonParser.getParameters( href );
+				if( parameters.get( 'seller' ) )
+					seller_id = parameters.get('seller');
+			}
+		}
 
 		if( box )
 		{
@@ -1001,6 +1029,7 @@ export default class ProductPage
 		}
 		else
 		{
+
 			let buyBox = document.querySelector('#buybox');
 
 			if( buyBox )
