@@ -1030,7 +1030,7 @@ export default class ProductPage
 		else
 		{
 
-			let buyBox = document.querySelector('#buybox');
+			let buyBox = document.querySelector('#buybox,#buybox_feature_div');
 
 			if( buyBox )
 			{
