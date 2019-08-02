@@ -447,9 +447,10 @@ export default class CartPage
 			return PromiseUtils.tryNTimes(()=>
 			{
 				dropdown.click();
-				let popup = document.querySelector('div.a-popover.a-dropdown-common[aria-hidden="false"] li:last-child a');
+				let popup = Array.from( document.querySelectorAll('div.a-popover.a-dropdown-common[aria-hidden="false"] li a') );
+				let good = popup.find(i=>i.textContent.trim() ==='10+' );
 
-				return popup === null ? false : popup;
+				return good === undefined ? false : good;
 
 			},300, 15 );
 		})
@@ -478,7 +479,7 @@ export default class CartPage
 				input.dispatchEvent( inputEvent );
 
 				let div = this.getCartItemByAsin( asin );
-				let updateButton = div.querySelector('a[data-action="update"]');
+				let updateButton = div.querySelector('a[data-action="update"]:not(.sc-link-disabled)');
 				return updateButton === null ? false : updateButton;
 			},250,12);
 		})
@@ -495,7 +496,7 @@ export default class CartPage
 
 				return it.stock.length > 0 ? it : false;
 
-			},350,14);
+			},500,7);
 		});
 	}
 }
